@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createRng } from './rng';
 import { decide, updateHistory } from './rules';
 import { simulateRound } from './simulate';
-import { createInitialState, takeTurn } from './gameReducer';
+import { createInitialState, fastForwardToResolution, takeTurn } from './gameReducer';
 import { logToCsv } from './csv';
 import type { GameObject } from './types';
 
@@ -90,22 +90,29 @@ describe('simulateRound', () => {
     expect(after[0].alive).toBe(false);
   });
 
-  it('double doubles the stakes for the object that has it active', () => {
-    const objects = [
-      obj({ id: 0, basePattern: 'always-give', doubleActive: true, lives: 100 }), // extra lives so it survives the round
+  it('double combines multiplicatively across both sides: 2x with one side, 4x with both', () => {
+    const oneDoubled = [
+      obj({ id: 0, basePattern: 'always-give', doubleActive: true, lives: 100 }),
       obj({ id: 1, basePattern: 'always-take' }),
     ];
-    const rng = createRng(3);
-    const { objects: after } = simulateRound(objects, 1000, false, rng);
-    expect(after[0].lives).toBe(80); // giver loses 2/pass over 10 passes
-    expect(after[1].lives).toBe(20); // taker (no double) gains its own multiplier (1) per pass
+    const { objects: afterOne } = simulateRound(oneDoubled, 1000, false, createRng(3));
+    expect(afterOne[0].lives).toBe(80); // giver loses 2/pass over 10 passes
+    expect(afterOne[1].lives).toBe(30); // taker also gains the combined 2x, not its own (1x)
+
+    const bothDoubled = [
+      obj({ id: 0, basePattern: 'always-give', doubleActive: true, lives: 100 }),
+      obj({ id: 1, basePattern: 'always-take', doubleActive: true }),
+    ];
+    const { objects: afterBoth } = simulateRound(bothDoubled, 1000, false, createRng(3));
+    expect(afterBoth[0].lives).toBe(60); // giver loses 4/pass (2x2) over 10 passes
+    expect(afterBoth[1].lives).toBe(50); // taker gains 4/pass over 10 passes
   });
 
-  it('pausing skips all encounters and does not change the pool', () => {
+  it('pausing skips all encounters but still drains the pool by the flat decrement', () => {
     const objects = [obj({ id: 0, basePattern: 'always-take' }), obj({ id: 1, basePattern: 'always-take' })];
     const rng = createRng(4);
     const { objects: after, pool, subRounds, deathsThisRound } = simulateRound(objects, 1000, true, rng);
-    expect(pool).toBe(1000);
+    expect(pool).toBe(990);
     expect(subRounds).toHaveLength(0);
     expect(deathsThisRound).toBe(0);
     expect(after[0].lives).toBe(10);
@@ -163,14 +170,34 @@ describe('gameReducer', () => {
     expect(state.winner!.greenPct + state.winner!.bluePct).toBeCloseTo(100);
   });
 
-  it('pause does not run a simulation and does not deplete the pool', () => {
+  it('pause does not run a simulation but still drains the pool by the flat decrement', () => {
     let state = createInitialState();
     const poolBefore = state.pool;
     const rng = createRng(11);
     state = takeTurn(state, { type: 'pause' }, rng);
-    expect(state.pool).toBe(poolBefore);
+    expect(state.pool).toBe(poolBefore - 10);
     expect(state.lastResult?.paused).toBe(true);
     expect(state.lastResult?.subRounds).toHaveLength(0);
+  });
+
+  it('ends with no winner immediately on a mutual wipeout, even with a healthy pool', () => {
+    let state = createInitialState();
+    state.objects = []; // both colors wiped out
+    const rng = createRng(13);
+    state = takeTurn(state, { type: 'decline' }, rng);
+    expect(state.pool).toBeGreaterThan(0); // isolates this from the separate pool-depletion path
+    expect(state.status).toBe('lost');
+    expect(state.winner).toBeUndefined();
+  });
+
+  it('fastForwardToResolution auto-plays a single surviving color to a win', () => {
+    let state = createInitialState();
+    state.objects = state.objects.filter((o) => o.color === 'blue'); // green already eliminated
+    state.pool = 100000; // avoid depletion for this test
+    const rng = createRng(14);
+    const result = fastForwardToResolution(state, rng);
+    expect(result.status).toBe('won');
+    expect(result.winner).toEqual({ greenPct: 0, bluePct: 100 });
   });
 });
 

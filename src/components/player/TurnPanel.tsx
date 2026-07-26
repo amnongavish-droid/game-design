@@ -1,4 +1,6 @@
 import type { Color, RuleName, TurnAction } from '../../engine/types';
+import { CARD_DEFS } from './cardDefs';
+import { Card } from './Card';
 
 const RULE_LABELS: Record<RuleName, string> = {
   'always-give': 'Always Give',
@@ -8,15 +10,40 @@ const RULE_LABELS: Record<RuleName, string> = {
   'tit-for-tat-delayed': 'Tit-for-Tat (Delayed)',
 };
 
+function actionToCardId(action: TurnAction): string {
+  switch (action.type) {
+    case 'play-rule':
+      return action.rule;
+    case 'toggle-double':
+      return 'double';
+    case 'pause':
+      return 'pause';
+    case 'decline':
+      return 'decline';
+  }
+}
+
 interface Props {
   currentPlayer: Color;
   currentPattern: RuleName;
   doubleActive: boolean;
   disabled: boolean;
-  onPlay: (action: TurnAction) => void;
+  pendingAction: TurnAction | null;
+  onSelect: (action: TurnAction) => void;
+  onConfirm: () => void;
 }
 
-export function TurnPanel({ currentPlayer, currentPattern, doubleActive, disabled, onPlay }: Props) {
+export function TurnPanel({
+  currentPlayer,
+  currentPattern,
+  doubleActive,
+  disabled,
+  pendingAction,
+  onSelect,
+  onConfirm,
+}: Props) {
+  const selectedId = pendingAction ? actionToCardId(pendingAction) : null;
+
   return (
     <div className={`turn-panel turn-panel--${currentPlayer}`}>
       <div className="turn-panel__header">
@@ -26,23 +53,24 @@ export function TurnPanel({ currentPlayer, currentPattern, doubleActive, disable
           {doubleActive ? <strong> + Double</strong> : null}
         </span>
       </div>
+
       <div className="turn-panel__cards">
-        {(Object.keys(RULE_LABELS) as RuleName[]).map((rule) => (
-          <button key={rule} disabled={disabled} onClick={() => onPlay({ type: 'play-rule', rule })}>
-            {RULE_LABELS[rule]}
-          </button>
+        {CARD_DEFS.map((def) => (
+          <Card
+            key={def.id}
+            def={def}
+            selected={selectedId === def.id}
+            disabled={disabled}
+            onClick={() => onSelect(def.action)}
+          />
         ))}
-        <button disabled={disabled} onClick={() => onPlay({ type: 'toggle-double' })}>
-          {doubleActive ? 'Cancel Double' : 'Double'}
-        </button>
       </div>
-      <div className="turn-panel__meta-actions">
-        <button disabled={disabled} onClick={() => onPlay({ type: 'decline' })}>
-          Don't play a card
+
+      <div className="turn-panel__confirm">
+        <button className="confirm-move-btn" disabled={disabled || !pendingAction} onClick={onConfirm}>
+          Confirm Move
         </button>
-        <button disabled={disabled} onClick={() => onPlay({ type: 'pause' })}>
-          Pause
-        </button>
+        {pendingAction && <span className="turn-panel__pending-note">Selected — click Confirm Move to play it.</span>}
       </div>
     </div>
   );

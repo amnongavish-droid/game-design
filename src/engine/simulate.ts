@@ -40,22 +40,25 @@ export function simulateRound(
         const b = shuffled[i + 1];
         const decisionA = decide(a);
         const decisionB = decide(b);
+        // Double stacks multiplicatively across both sides of the encounter: neither -> 1x,
+        // one side -> 2x, both sides -> 4x. The resulting stakes apply equally to both objects.
         const multA = a.doubleActive ? 2 : 1;
         const multB = b.doubleActive ? 2 : 1;
+        const mult = multA * multB;
 
         let deltaA = 0;
         let deltaB = 0;
         if (decisionA === 'give' && decisionB === 'give') {
-          currentPool += Math.max(multA, multB);
+          currentPool += mult;
         } else if (decisionA === 'give' && decisionB === 'take') {
-          deltaA = -multA;
-          deltaB = multB;
+          deltaA = -mult;
+          deltaB = mult;
         } else if (decisionA === 'take' && decisionB === 'give') {
-          deltaA = multA;
-          deltaB = -multB;
+          deltaA = mult;
+          deltaB = -mult;
         } else {
-          deltaA = -multA;
-          deltaB = -multB;
+          deltaA = -mult;
+          deltaB = -mult;
         }
 
         a.lives += deltaA;
@@ -75,9 +78,10 @@ export function simulateRound(
       subRounds.push(snapshotSubRound(pass, currentPool, working, deathsThisPass));
       passObjectStates.push(working.map((o) => ({ id: o.id, lives: o.lives, alive: o.alive })));
     }
-
-    currentPool -= POOL_DECREMENT;
   }
+
+  // The pool drains by a flat amount every round, paused or not — only the encounters are skipped.
+  currentPool -= POOL_DECREMENT;
 
   return { objects: working, pool: currentPool, subRounds, passObjectStates, deathsThisRound };
 }

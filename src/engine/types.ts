@@ -82,3 +82,4 @@ export const POOL_DECREMENT = 10;
 export const ENCOUNTERS_PER_ROUND = 10;
 export const OBJECTS_PER_COLOR = 1000;
 export const STEADY_ROUNDS_TO_WIN = 100;
+export const MAX_AUTO_RESOLVE_ROUNDS = 300;

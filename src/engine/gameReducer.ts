@@ -1,6 +1,7 @@
 import { simulateRound } from './simulate';
 import type { Rng } from './rng';
 import {
+  MAX_AUTO_RESOLVE_ROUNDS,
   OBJECTS_PER_COLOR,
   STARTING_LIVES,
   STARTING_POOL,
@@ -72,24 +73,22 @@ export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameSt
     deathsThisRound,
   } = simulateRound(objects, state.pool, paused, rng);
 
-  // Pausing is a true no-op for the steady-state streak: it can't build progress toward a
-  // win (nothing was actually played out), but it also doesn't reset progress already made.
-  let steadyRoundsCount = state.steadyRoundsCount;
-  if (!paused) {
-    const poolNonDecreasing = poolAfter >= poolBefore;
-    const steadyThisRound = poolNonDecreasing && deathsThisRound === 0;
-    steadyRoundsCount = steadyThisRound ? state.steadyRoundsCount + 1 : 0;
-  }
+  // The pool still drains during a pause (only the encounters are skipped), so a pause always
+  // breaks the steady-state streak — it can never itself contribute progress toward a win.
+  const poolNonDecreasing = poolAfter >= poolBefore;
+  const steadyThisRound = poolNonDecreasing && deathsThisRound === 0;
+  const steadyRoundsCount = steadyThisRound ? state.steadyRoundsCount + 1 : 0;
+
+  const greenAlive = countAlive(resultObjects, 'green');
+  const blueAlive = countAlive(resultObjects, 'blue');
 
   let status: GameStatus = 'in-progress';
   let winner: GameState['winner'];
 
-  if (!paused && poolAfter <= 0) {
+  if (poolAfter <= 0 || (greenAlive === 0 && blueAlive === 0)) {
     status = 'lost';
   } else if (steadyRoundsCount >= STEADY_ROUNDS_TO_WIN) {
     status = 'won';
-    const greenAlive = countAlive(resultObjects, 'green');
-    const blueAlive = countAlive(resultObjects, 'blue');
     const total = greenAlive + blueAlive;
     winner =
       total === 0
@@ -102,8 +101,8 @@ export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameSt
     paused,
     poolBefore,
     poolAfter,
-    greenAlive: countAlive(resultObjects, 'green'),
-    blueAlive: countAlive(resultObjects, 'blue'),
+    greenAlive,
+    blueAlive,
     deathsThisRound,
     steadyRoundsCount,
     status,
@@ -122,4 +121,27 @@ export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameSt
     log: [...state.log, logEntry],
     lastResult: result,
   };
+}
+
+/**
+ * Once one color has been wiped out, no one is making decisions anymore — fast-forward
+ * through rounds (no card changes) until the game resolves, instead of requiring the
+ * remaining player to manually click through up to 100 rounds. Always returns a terminal
+ * state: if the population never settles within maxRounds, it's forced to 'lost'.
+ */
+export function fastForwardToResolution(
+  state: GameState,
+  rng: Rng,
+  maxRounds: number = MAX_AUTO_RESOLVE_ROUNDS
+): GameState {
+  let current = state;
+  let rounds = 0;
+  while (current.status === 'in-progress' && rounds < maxRounds) {
+    current = takeTurn(current, { type: 'decline' }, rng);
+    rounds += 1;
+  }
+  if (current.status === 'in-progress') {
+    return { ...current, status: 'lost' };
+  }
+  return current;
 }
