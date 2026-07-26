@@ -5,6 +5,8 @@ import { SimulationOverlay } from './SimulationOverlay';
 import { StatsBar } from './StatsBar';
 import { ResultOverlay } from './ResultOverlay';
 import { StartScreen } from './StartScreen';
+import { ColorPanel } from './ColorPanel';
+import { Thermometer } from './Thermometer';
 
 export function PlayerView({ game }: { game: UseGame }) {
   const {
@@ -29,6 +31,8 @@ export function PlayerView({ game }: { game: UseGame }) {
   }
 
   const currentPlayerObject = state.objects.find((o) => o.color === state.currentPlayer);
+  const blueObject = state.objects.find((o) => o.color === 'blue');
+  const greenObject = state.objects.find((o) => o.color === 'green');
   const greenAlive = displayObjects.filter((o) => o.alive && o.color === 'green').length;
   const blueAlive = displayObjects.filter((o) => o.alive && o.color === 'blue').length;
   const controlsDisabled = isSimulating || resolving;
@@ -36,18 +40,32 @@ export function PlayerView({ game }: { game: UseGame }) {
   return (
     <div className="player-view">
       <StatsBar
-        pool={displayPool}
-        greenAlive={greenAlive}
-        blueAlive={blueAlive}
         round={state.round}
         steadyRoundsCount={state.steadyRoundsCount}
         canUndo={canUndo && !controlsDisabled}
         onUndo={undo}
       />
 
-      <div className="field-wrapper">
-        <FieldCanvas objects={displayObjects} />
-        {isSimulating && progress && <SimulationOverlay pass={progress.pass} totalPasses={progress.totalPasses} />}
+      <Thermometer pool={displayPool} />
+
+      <div className="field-row">
+        {blueObject && (
+          <ColorPanel color="blue" pattern={blueObject.basePattern} doubleActive={blueObject.doubleActive} alive={blueAlive} />
+        )}
+
+        <div className="field-wrapper">
+          <FieldCanvas objects={displayObjects} />
+          {isSimulating && progress && <SimulationOverlay pass={progress.pass} totalPasses={progress.totalPasses} />}
+        </div>
+
+        {greenObject && (
+          <ColorPanel
+            color="green"
+            pattern={greenObject.basePattern}
+            doubleActive={greenObject.doubleActive}
+            alive={greenAlive}
+          />
+        )}
       </div>
 
       <ResultOverlay status={state.status} winner={state.winner} pool={state.pool} onPlayAgain={resetGame} />

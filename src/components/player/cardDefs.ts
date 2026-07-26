@@ -1,4 +1,12 @@
-import type { TurnAction } from '../../engine/types';
+import type { RuleName, TurnAction } from '../../engine/types';
+
+export const RULE_LABELS: Record<RuleName, string> = {
+  'always-give': 'Always Give',
+  'always-take': 'Always Take',
+  alternate: 'Alternate',
+  'tit-for-tat': 'Tit-for-Tat',
+  'tit-for-tat-delayed': 'Tit-for-Tat (Delayed)',
+};
 
 export type CardKind = 'base' | 'modifier' | 'action' | 'ghost';
 export type CardAccent = 'give' | 'take' | 'alternate' | 'tft' | 'double' | 'pause' | 'ghost';

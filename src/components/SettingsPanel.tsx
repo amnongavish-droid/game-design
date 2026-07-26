@@ -3,9 +3,11 @@ import { useState } from 'react';
 interface Props {
   soundEnabled: boolean;
   onToggleSound: (enabled: boolean) => void;
+  view: 'player' | 'dev';
+  onChangeView: (view: 'player' | 'dev') => void;
 }
 
-export function SettingsPanel({ soundEnabled, onToggleSound }: Props) {
+export function SettingsPanel({ soundEnabled, onToggleSound, view, onChangeView }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -29,14 +31,23 @@ export function SettingsPanel({ soundEnabled, onToggleSound }: Props) {
       </button>
       {open && (
         <div className="settings-panel__popover">
-          <label className="settings-panel__toggle">
-            <input
-              type="checkbox"
-              checked={soundEnabled}
-              onChange={(e) => onToggleSound(e.target.checked)}
-            />
-            Sound
-          </label>
+          <div className="settings-panel__section">
+            <p className="settings-panel__section-title">View</p>
+            <div className="settings-panel__view-switch">
+              <button disabled={view === 'player'} onClick={() => onChangeView('player')}>
+                Player
+              </button>
+              <button disabled={view === 'dev'} onClick={() => onChangeView('dev')}>
+                Developer
+              </button>
+            </div>
+          </div>
+          <div className="settings-panel__section">
+            <label className="settings-panel__toggle">
+              <input type="checkbox" checked={soundEnabled} onChange={(e) => onToggleSound(e.target.checked)} />
+              Sound
+            </label>
+          </div>
         </div>
       )}
     </div>

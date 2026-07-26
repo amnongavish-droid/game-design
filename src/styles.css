@@ -24,16 +24,21 @@ body {
 }
 
 .app {
-  max-width: 960px;
+  max-width: 1180px;
   margin: 0 auto;
   padding: 16px;
 }
 
-.app__view-switcher {
+.app__top-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   margin-bottom: 12px;
+}
+
+.app__title {
+  font-size: 1.15rem;
+  margin: 0;
 }
 
 button {
@@ -68,25 +73,152 @@ button:not(:disabled):hover {
   margin-bottom: 12px;
 }
 
-.stats-bar__item--green strong {
-  color: #4ade80;
-}
-
-.stats-bar__item--blue strong {
-  color: #60a5fa;
-}
-
 .stats-bar__undo {
   margin-left: auto;
 }
 
 /* ---------- Field ---------- */
 
+.field-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
 .field-wrapper {
   position: relative;
-  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.color-panel {
+  width: 160px;
+  flex-shrink: 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #1e293b;
+  border-top: 3px solid var(--mute);
+  text-align: center;
+}
+
+.color-panel--blue {
+  border-top-color: #60a5fa;
+}
+
+.color-panel--green {
+  border-top-color: #4ade80;
+}
+
+.color-panel__label {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+}
+
+.color-panel__rule {
+  margin: 0 0 10px;
+  font-weight: 600;
+  min-height: 2.6em;
+}
+
+.color-panel__count {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--bone-dim);
+}
+
+.color-panel__count strong {
+  font-size: 1.3rem;
+  color: var(--bone);
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Thermometer ---------- */
+
+.thermometer {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 0 auto 16px;
+}
+
+.thermometer__title {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+}
+
+.thermometer__scale {
+  position: relative;
+  width: 22px;
+  height: 200px;
+  margin-right: 46px;
+}
+
+.thermometer__track {
+  position: absolute;
+  inset: 0;
+  border-radius: 11px;
+  overflow: hidden;
+  border: 1px solid var(--plate-edge);
+  background: linear-gradient(to top, #b3452f 0%, #f2872b 35%, #eab308 55%, #4fb3a9 75%, #22c55e 100%);
+}
+
+.thermometer__mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #0d1117;
+  opacity: 0.88;
+  transition: height 0.3s ease;
+}
+
+.thermometer__tick {
+  position: absolute;
+  left: 100%;
+  transform: translateY(50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 6px;
+  white-space: nowrap;
+}
+
+.thermometer__tick-line {
+  width: 6px;
+  height: 1px;
+  background: var(--bone-dim);
+}
+
+.thermometer__tick-label {
+  font-size: 0.65rem;
+  color: var(--bone-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.thermometer__bulb {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--plate-edge);
+  margin-top: -4px;
+  transition: background 0.3s ease;
+}
+
+.thermometer__reading {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .field-canvas {
@@ -246,10 +378,12 @@ button:not(:disabled):hover {
 }
 
 .turn-panel__cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 14px;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
   margin-bottom: 16px;
+  overflow-x: auto;
+  padding-bottom: 4px;
 }
 
 .turn-panel__confirm {
@@ -282,12 +416,14 @@ button:not(:disabled):hover {
   background: linear-gradient(155deg, var(--plate) 0%, #161c28 100%);
   border: 1px solid var(--plate-edge);
   border-radius: 8px;
-  padding: 12px 10px 10px;
-  min-height: 168px;
+  padding: 10px 9px 9px;
+  min-height: 158px;
+  flex: 0 0 118px;
+  width: 118px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 6px;
   text-align: left;
   clip-path: polygon(14px 0, 100% 0, 100% 100%, 0 100%, 0 14px);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -440,6 +576,25 @@ button:not(:disabled):hover {
   align-items: center;
   gap: 8px;
   cursor: pointer;
+}
+
+.settings-panel__section + .settings-panel__section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--plate-edge);
+}
+
+.settings-panel__section-title {
+  margin: 0 0 6px;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+}
+
+.settings-panel__view-switch {
+  display: flex;
+  gap: 6px;
 }
 
 /* ---------- Developer view ---------- */

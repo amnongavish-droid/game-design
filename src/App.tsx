@@ -12,14 +12,9 @@ export function App() {
 
   return (
     <div className="app">
-      <div className="app__view-switcher">
-        <button disabled={view === 'player'} onClick={() => setView('player')}>
-          Player view
-        </button>
-        <button disabled={view === 'dev'} onClick={() => setView('dev')}>
-          Developer view
-        </button>
-        <SettingsPanel soundEnabled={soundEnabled} onToggleSound={setSoundEnabled} />
+      <div className="app__top-bar">
+        <h1 className="app__title">Give / Take</h1>
+        <SettingsPanel soundEnabled={soundEnabled} onToggleSound={setSoundEnabled} view={view} onChangeView={setView} />
       </div>
       {view === 'player' ? <PlayerView game={game} /> : <DevView game={game} />}
     </div>

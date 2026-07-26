@@ -30,10 +30,13 @@ function tierFor(lives: number): 'strong' | 'mid' | 'faded' {
   return 'faded';
 }
 
+const GLYPH_SCALE = 2;
+
 function drawDrifter(ctx: CanvasRenderingContext2D, x: number, y: number, rotation: number, color: string) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(rotation);
+  ctx.scale(GLYPH_SCALE, GLYPH_SCALE);
 
   ctx.strokeStyle = color;
   ctx.lineWidth = 0.45;
