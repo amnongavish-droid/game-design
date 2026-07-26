@@ -38,19 +38,21 @@ export function Thermometer({ pool }: Props) {
   return (
     <div className="thermometer">
       <p className="thermometer__title">Livelihood</p>
-      <div className="thermometer__scale">
-        <div className="thermometer__track">
-          <div className="thermometer__mask" style={{ height: `${(1 - fillRatio) * 100}%` }} />
-        </div>
-        {ticks.map((v) => (
-          <div key={v} className="thermometer__tick" style={{ bottom: `${(v / SCALE_MAX) * 100}%` }}>
-            <span className="thermometer__tick-line" />
-            <span className="thermometer__tick-label">{v}</span>
+      <div className="thermometer__row">
+        <div className="thermometer__bulb" style={{ background: bulbColor }} />
+        <div className="thermometer__scale">
+          <div className="thermometer__track">
+            <div className="thermometer__mask" style={{ width: `${(1 - fillRatio) * 100}%` }} />
           </div>
-        ))}
+          {ticks.map((v) => (
+            <div key={v} className="thermometer__tick" style={{ left: `${(v / SCALE_MAX) * 100}%` }}>
+              <span className="thermometer__tick-line" />
+              <span className="thermometer__tick-label">{v}</span>
+            </div>
+          ))}
+        </div>
+        <p className="thermometer__reading">{pool}</p>
       </div>
-      <div className="thermometer__bulb" style={{ background: bulbColor }} />
-      <p className="thermometer__reading">{pool}</p>
     </div>
   );
 }

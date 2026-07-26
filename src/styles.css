@@ -156,46 +156,52 @@ button:not(:disabled):hover {
   color: var(--bone-dim);
 }
 
+.thermometer__row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .thermometer__scale {
   position: relative;
-  width: 22px;
-  height: 200px;
-  margin-right: 46px;
+  width: 340px;
+  height: 20px;
+  margin-bottom: 26px;
 }
 
 .thermometer__track {
   position: absolute;
   inset: 0;
-  border-radius: 11px;
+  border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--plate-edge);
-  background: linear-gradient(to top, #b3452f 0%, #f2872b 35%, #eab308 55%, #4fb3a9 75%, #22c55e 100%);
+  background: linear-gradient(to right, #b3452f 0%, #f2872b 35%, #eab308 55%, #4fb3a9 75%, #22c55e 100%);
 }
 
 .thermometer__mask {
   position: absolute;
   top: 0;
-  left: 0;
   right: 0;
+  bottom: 0;
   background: #0d1117;
   opacity: 0.88;
-  transition: height 0.3s ease;
+  transition: width 0.3s ease;
 }
 
 .thermometer__tick {
   position: absolute;
-  left: 100%;
-  transform: translateY(50%);
+  top: 100%;
+  transform: translateX(-50%);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding-left: 6px;
-  white-space: nowrap;
+  gap: 3px;
+  padding-top: 4px;
 }
 
 .thermometer__tick-line {
-  width: 6px;
-  height: 1px;
+  width: 1px;
+  height: 6px;
   background: var(--bone-dim);
 }
 
@@ -210,7 +216,7 @@ button:not(:disabled):hover {
   height: 30px;
   border-radius: 50%;
   border: 1px solid var(--plate-edge);
-  margin-top: -4px;
+  flex-shrink: 0;
   transition: background 0.3s ease;
 }
 
@@ -219,6 +225,7 @@ button:not(:disabled):hover {
   font-size: 0.85rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
 .field-canvas {
