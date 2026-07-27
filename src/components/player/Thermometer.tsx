@@ -1,4 +1,6 @@
-const SCALE_MAX = 2000; // 2x the starting pool — high enough to keep the danger zone near zero readable
+import { POOL_MAX } from '../../engine/types';
+
+const SCALE_MAX = POOL_MAX; // the gauge's top end matches the hard gameplay cap on the pool
 const TICK_STEP = 500;
 
 const STOPS: { ratio: number; color: [number, number, number] }[] = [

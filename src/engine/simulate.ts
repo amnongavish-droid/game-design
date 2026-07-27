@@ -3,6 +3,7 @@ import { shuffle, type Rng } from './rng';
 import {
   ENCOUNTERS_PER_ROUND,
   POOL_DECREMENT,
+  POOL_MAX,
   type GameObject,
   type ObjectSnapshot,
   type SubRoundStat,
@@ -49,7 +50,8 @@ export function simulateRound(
         let deltaA = 0;
         let deltaB = 0;
         if (decisionA === 'give' && decisionB === 'give') {
-          currentPool += mult;
+          // Capped at POOL_MAX — the pool can't grow past it, though it can still drain below it.
+          currentPool = currentPool >= POOL_MAX ? currentPool : Math.min(currentPool + mult, POOL_MAX);
         } else if (decisionA === 'give' && decisionB === 'take') {
           deltaA = -mult;
           deltaB = mult;

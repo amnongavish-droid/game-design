@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { createInitialState, fastForwardToResolution, takeTurn } from '../engine/gameReducer';
+import { checkSustainability as runSustainabilityCheck, createInitialState, takeTurn } from '../engine/gameReducer';
 import { createRng, type Rng } from '../engine/rng';
 import type { Color, GameObject, GameState, RoundResult, TurnAction } from '../engine/types';
 import { playCardClick, startSimulationSoundtrack, stopSimulationSoundtrack } from '../audio/sound';
 
 const SIMULATION_DURATION_MS = 5000;
-const RESOLVE_PAINT_DELAY_MS = 50; // lets the "resolving" indicator paint before the (possibly heavy) fast-forward
 
 export interface DisplayObject {
   id: number;
@@ -30,7 +29,6 @@ export function useGame(soundEnabled: boolean) {
   const [history, setHistory] = useState<GameState[]>([]);
   const [pendingAction, setPendingAction] = useState<TurnAction | null>(null);
   const [playback, setPlayback] = useState<Playback | null>(null);
-  const [resolving, setResolving] = useState(false);
   const rngRef = useRef<Rng>(createRng(newSeed()));
 
   const startGame = useCallback(() => setStarted(true), []);
@@ -41,7 +39,6 @@ export function useGame(soundEnabled: boolean) {
     setHistory([]);
     setPendingAction(null);
     setPlayback(null);
-    setResolving(false);
   }, []);
 
   const selectAction = useCallback(
@@ -71,13 +68,25 @@ export function useGame(soundEnabled: boolean) {
     setPendingAction(null);
   }, [pendingAction]);
 
+  // Manually requested once one color has been wiped out: plays a fixed batch of rounds (no
+  // card changes, since there's no one left to change the eliminated color's rule) and declares
+  // the survivor the winner if it comes through intact.
+  const checkSustainability = useCallback(() => {
+    setState((prev) => {
+      if (prev.status !== 'in-progress') return prev;
+      setHistory((h) => [...h, prev]);
+      const result = runSustainabilityCheck(prev, rngRef.current);
+      setPlayback(null);
+      return result;
+    });
+  }, []);
+
   const undo = useCallback(() => {
     setHistory((h) => {
       if (h.length === 0) return h;
       setState(h[h.length - 1]);
       setPlayback(null);
       setPendingAction(null);
-      setResolving(false);
       return h.slice(0, -1);
     });
   }, []);
@@ -96,32 +105,6 @@ export function useGame(soundEnabled: boolean) {
 
   const totalPasses = playback?.result.passObjectStates.length ?? 0;
   const isSimulating = playback !== null && playback.passIndex < totalPasses - 1;
-
-  // Once one color has been fully eliminated, no one is making decisions anymore — fast-forward
-  // to the resolution instead of requiring manual clicks through up to 100 more rounds.
-  useEffect(() => {
-    if (!started || isSimulating || state.status !== 'in-progress') return;
-    let greenAlive = 0;
-    let blueAlive = 0;
-    for (const o of state.objects) {
-      if (!o.alive) continue;
-      if (o.color === 'green') greenAlive += 1;
-      else blueAlive += 1;
-    }
-    const exactlyOneWipedOut = (greenAlive === 0) !== (blueAlive === 0);
-    if (!exactlyOneWipedOut) return;
-
-    setResolving(true);
-    const timer = setTimeout(() => {
-      setState((prev) => {
-        const finalState = fastForwardToResolution(prev, rngRef.current);
-        setPlayback(null);
-        setResolving(false);
-        return finalState;
-      });
-    }, RESOLVE_PAINT_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [state, isSimulating, started]);
 
   // Ambient soundtrack while a round's encounters are animating.
   useEffect(() => {
@@ -165,9 +148,9 @@ export function useGame(soundEnabled: boolean) {
     selectAction,
     confirmMove,
     clearSelection,
+    checkSustainability,
     undo,
     canUndo: history.length > 0,
-    resolving,
     started,
     startGame,
     resetGame,

@@ -1,11 +1,11 @@
 import { simulateRound } from './simulate';
 import type { Rng } from './rng';
 import {
-  MAX_AUTO_RESOLVE_ROUNDS,
   OBJECTS_PER_COLOR,
   STARTING_LIVES,
   STARTING_POOL,
   STEADY_ROUNDS_TO_WIN,
+  SUSTAINABILITY_CHECK_ROUNDS,
   type Color,
   type GameObject,
   type GameState,
@@ -124,24 +124,30 @@ export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameSt
 }
 
 /**
- * Once one color has been wiped out, no one is making decisions anymore — fast-forward
- * through rounds (no card changes) until the game resolves, instead of requiring the
- * remaining player to manually click through up to 100 rounds. Always returns a terminal
- * state: if the population never settles within maxRounds, it's forced to 'lost'.
+ * Once one color has been wiped out, the surviving player can request this check instead of
+ * manually clicking through up to 100 rounds: it plays out a fixed batch of rounds (no card
+ * changes, since there's no one left to change the other color's rule) and declares the
+ * survivor the winner outright if it comes through all of them still alive with the pool
+ * intact — it does not require the usual 100-round steady-state streak, since with only one
+ * color left there's no equilibrium to reach with an opponent.
  */
-export function fastForwardToResolution(
+export function checkSustainability(
   state: GameState,
   rng: Rng,
-  maxRounds: number = MAX_AUTO_RESOLVE_ROUNDS
+  rounds: number = SUSTAINABILITY_CHECK_ROUNDS
 ): GameState {
   let current = state;
-  let rounds = 0;
-  while (current.status === 'in-progress' && rounds < maxRounds) {
+  for (let i = 0; i < rounds && current.status === 'in-progress'; i++) {
     current = takeTurn(current, { type: 'decline' }, rng);
-    rounds += 1;
   }
-  if (current.status === 'in-progress') {
-    return { ...current, status: 'lost' };
-  }
-  return current;
+  if (current.status !== 'in-progress') return current; // pool depleted, or wiped out entirely, during the check
+
+  // Both-eliminated would already have returned above via the engine's mutual-wipeout check,
+  // so if we get here exactly one color survived.
+  const greenAlive = current.objects.some((o) => o.alive && o.color === 'green');
+  return {
+    ...current,
+    status: 'won',
+    winner: greenAlive ? { greenPct: 100, bluePct: 0 } : { greenPct: 0, bluePct: 100 },
+  };
 }

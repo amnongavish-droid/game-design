@@ -7,7 +7,8 @@ const COLORS = {
   blue: { strong: '#1d4ed8', mid: '#60a5fa', faded: '#bfdbfe' },
 };
 
-const CANVAS_SIZE = 520;
+const CANVAS_WIDTH = 520;
+const CANVAS_HEIGHT = 340;
 
 // "Ocular drifter" glyph: a glowing body, a dark pupil with a highlight, and three thin
 // trailing tendrils. Proportions scaled down from the approved mockup (body radius 5.5 there).
@@ -82,16 +83,18 @@ export function FieldCanvas({ objects }: Props) {
     const { width, height } = canvas;
     const cx = width / 2;
     const cy = height / 2;
-    const radius = width / 2;
+    const rx = width / 2;
+    const ry = height / 2;
+    const outerRadius = Math.max(rx, ry);
 
     ctx.clearRect(0, 0, width, height);
 
     ctx.save();
     ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
     ctx.clip();
 
-    const bg = ctx.createRadialGradient(cx, cy * 0.85, radius * 0.1, cx, cy, radius);
+    const bg = ctx.createRadialGradient(cx, cy * 0.85, outerRadius * 0.1, cx, cy, outerRadius);
     bg.addColorStop(0, '#141d2d');
     bg.addColorStop(1, '#080b12');
     ctx.fillStyle = bg;
@@ -108,5 +111,5 @@ export function FieldCanvas({ objects }: Props) {
     ctx.restore();
   }, [objects]);
 
-  return <canvas ref={canvasRef} width={CANVAS_SIZE} height={CANVAS_SIZE} className="field-canvas" />;
+  return <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} className="field-canvas" />;
 }

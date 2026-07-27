@@ -6,12 +6,16 @@ interface Props {
   pattern: RuleName;
   doubleActive: boolean;
   alive: number;
+  active: boolean;
 }
 
-export function ColorPanel({ color, pattern, doubleActive, alive }: Props) {
+export function ColorPanel({ color, pattern, doubleActive, alive, active }: Props) {
   return (
-    <div className={`color-panel color-panel--${color}`}>
-      <p className="color-panel__label">{color === 'green' ? 'Green' : 'Blue'}</p>
+    <div className={`color-panel color-panel--${color}${active ? ' color-panel--active' : ''}`}>
+      <p className="color-panel__label">
+        {color === 'green' ? 'Green' : 'Blue'}
+        {active && <span className="color-panel__turn-badge">turn</span>}
+      </p>
       <p className="color-panel__rule">
         {RULE_LABELS[pattern]}
         {doubleActive ? ' + Double' : ''}

@@ -18,9 +18,9 @@ export function PlayerView({ game }: { game: UseGame }) {
     pendingAction,
     selectAction,
     confirmMove,
+    checkSustainability,
     undo,
     canUndo,
-    resolving,
     started,
     startGame,
     resetGame,
@@ -30,59 +30,74 @@ export function PlayerView({ game }: { game: UseGame }) {
     return <StartScreen onStart={startGame} />;
   }
 
-  const currentPlayerObject = state.objects.find((o) => o.color === state.currentPlayer);
   const blueObject = state.objects.find((o) => o.color === 'blue');
   const greenObject = state.objects.find((o) => o.color === 'green');
   const greenAlive = displayObjects.filter((o) => o.alive && o.color === 'green').length;
   const blueAlive = displayObjects.filter((o) => o.alive && o.color === 'blue').length;
-  const controlsDisabled = isSimulating || resolving;
+  const controlsDisabled = isSimulating;
+
+  const oneColorEliminated = state.status === 'in-progress' && !isSimulating && (greenAlive === 0) !== (blueAlive === 0);
+  const survivingColor = oneColorEliminated ? (greenAlive === 0 ? 'blue' : 'green') : null;
 
   return (
     <div className="player-view">
-      <StatsBar
-        round={state.round}
-        steadyRoundsCount={state.steadyRoundsCount}
-        canUndo={canUndo && !controlsDisabled}
-        onUndo={undo}
-      />
-
-      <Thermometer pool={displayPool} />
+      <div className="top-row">
+        <StatsBar round={state.round} steadyRoundsCount={state.steadyRoundsCount} />
+        <Thermometer pool={displayPool} />
+      </div>
 
       <div className="field-row">
-        {blueObject && (
-          <ColorPanel color="blue" pattern={blueObject.basePattern} doubleActive={blueObject.doubleActive} alive={blueAlive} />
-        )}
+        <div className="color-panel-slot">
+          {blueObject && (
+            <ColorPanel
+              color="blue"
+              pattern={blueObject.basePattern}
+              doubleActive={blueObject.doubleActive}
+              alive={blueAlive}
+              active={state.status === 'in-progress' && state.currentPlayer === 'blue'}
+            />
+          )}
+          {survivingColor === 'blue' && (
+            <button className="sustainability-btn" onClick={checkSustainability}>
+              Check Sustainability
+            </button>
+          )}
+        </div>
 
         <div className="field-wrapper">
           <FieldCanvas objects={displayObjects} />
           {isSimulating && progress && <SimulationOverlay pass={progress.pass} totalPasses={progress.totalPasses} />}
         </div>
 
-        {greenObject && (
-          <ColorPanel
-            color="green"
-            pattern={greenObject.basePattern}
-            doubleActive={greenObject.doubleActive}
-            alive={greenAlive}
-          />
-        )}
+        <div className="color-panel-slot">
+          {greenObject && (
+            <ColorPanel
+              color="green"
+              pattern={greenObject.basePattern}
+              doubleActive={greenObject.doubleActive}
+              alive={greenAlive}
+              active={state.status === 'in-progress' && state.currentPlayer === 'green'}
+            />
+          )}
+          {survivingColor === 'green' && (
+            <button className="sustainability-btn" onClick={checkSustainability}>
+              Check Sustainability
+            </button>
+          )}
+        </div>
       </div>
 
       <ResultOverlay status={state.status} winner={state.winner} pool={state.pool} onPlayAgain={resetGame} />
 
-      {state.status === 'in-progress' && resolving && (
-        <div className="resolving-banner">One side has been eliminated — resolving the final outcome…</div>
-      )}
-
-      {state.status === 'in-progress' && !resolving && currentPlayerObject && (
+      {state.status === 'in-progress' && !oneColorEliminated && (
         <TurnPanel
           currentPlayer={state.currentPlayer}
-          currentPattern={currentPlayerObject.basePattern}
-          doubleActive={currentPlayerObject.doubleActive}
           disabled={controlsDisabled}
           pendingAction={pendingAction}
           onSelect={selectAction}
           onConfirm={confirmMove}
+          canUndo={canUndo}
+          onUndo={undo}
         />
       )}
     </div>

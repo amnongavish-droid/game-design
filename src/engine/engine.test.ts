@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createRng } from './rng';
 import { decide, updateHistory } from './rules';
 import { simulateRound } from './simulate';
-import { createInitialState, fastForwardToResolution, takeTurn } from './gameReducer';
+import { checkSustainability, createInitialState, takeTurn } from './gameReducer';
 import { logToCsv } from './csv';
 import type { GameObject } from './types';
 
@@ -77,8 +77,16 @@ describe('simulateRound', () => {
     const { objects: after, pool } = simulateRound(objects, 1000, false, rng);
     expect(after[0].lives).toBe(10);
     expect(after[1].lives).toBe(10);
-    // 10 passes of mutual give = +10 to pool, then -10 flat decrement = net 0
-    expect(pool).toBe(1000);
+    // 10 passes of mutual give = +10 to pool, then -100 flat decrement = net -90
+    expect(pool).toBe(910);
+  });
+
+  it('caps the pool at 2000, never letting mutual give grow it further', () => {
+    const objects = [obj({ id: 0, basePattern: 'always-give' }), obj({ id: 1, basePattern: 'always-give' })];
+    const rng = createRng(20);
+    const { pool } = simulateRound(objects, 1995, false, rng);
+    // 10 passes of +1 would reach 2005 uncapped; capped at 2000, then -100 flat decrement.
+    expect(pool).toBe(1900);
   });
 
   it('give vs take transfers a life from giver to taker', () => {
@@ -112,7 +120,7 @@ describe('simulateRound', () => {
     const objects = [obj({ id: 0, basePattern: 'always-take' }), obj({ id: 1, basePattern: 'always-take' })];
     const rng = createRng(4);
     const { objects: after, pool, subRounds, deathsThisRound } = simulateRound(objects, 1000, true, rng);
-    expect(pool).toBe(990);
+    expect(pool).toBe(900);
     expect(subRounds).toHaveLength(0);
     expect(deathsThisRound).toBe(0);
     expect(after[0].lives).toBe(10);
@@ -159,7 +167,8 @@ describe('gameReducer', () => {
 
   it('declares a win with a proportional split once 100 stable rounds pass', () => {
     let state = createInitialState();
-    state.pool = 100000; // avoid depletion for this test
+    // No override needed: an all-give population self-sustains near the pool cap (2000) each
+    // round rather than depleting, since mutual-give growth outpaces the flat -10 decrement.
     const rng = createRng(10);
     for (let i = 0; i < 100; i++) {
       state = takeTurn(state, { type: 'decline' }, rng);
@@ -175,7 +184,7 @@ describe('gameReducer', () => {
     const poolBefore = state.pool;
     const rng = createRng(11);
     state = takeTurn(state, { type: 'pause' }, rng);
-    expect(state.pool).toBe(poolBefore - 10);
+    expect(state.pool).toBe(poolBefore - 100);
     expect(state.lastResult?.paused).toBe(true);
     expect(state.lastResult?.subRounds).toHaveLength(0);
   });
@@ -190,14 +199,29 @@ describe('gameReducer', () => {
     expect(state.winner).toBeUndefined();
   });
 
-  it('fastForwardToResolution auto-plays a single surviving color to a win', () => {
+  it('checkSustainability declares the survivor a winner after 10 clean rounds, without needing a 100-round streak', () => {
     let state = createInitialState();
     state.objects = state.objects.filter((o) => o.color === 'blue'); // green already eliminated
     state.pool = 100000; // avoid depletion for this test
     const rng = createRng(14);
-    const result = fastForwardToResolution(state, rng);
+    const result = checkSustainability(state, rng);
     expect(result.status).toBe('won');
     expect(result.winner).toEqual({ greenPct: 0, bluePct: 100 });
+    expect(result.steadyRoundsCount).toBeLessThan(100); // won on the sustainability check, not the streak
+  });
+
+  it('checkSustainability ends with no winner if the pool depletes during the check', () => {
+    let state = createInitialState();
+    // always-take vs always-take: no give-give growth to offset the flat decrement, so the
+    // pool purely drains and depletes quickly, isolating this from the pool-cap/growth path.
+    state.objects = state.objects
+      .filter((o) => o.color === 'blue')
+      .map((o) => ({ ...o, basePattern: 'always-take' as const }));
+    state.pool = 15;
+    const rng = createRng(15);
+    const result = checkSustainability(state, rng);
+    expect(result.status).toBe('lost');
+    expect(result.winner).toBeUndefined();
   });
 });
 
