@@ -71,29 +71,34 @@ describe('simulateRound', () => {
     }
   });
 
-  it('mutual give leaves lives unchanged and nets +1 to the pool per encounter', () => {
+  it('mutual give leaves lives unchanged and nets +1.75 to the pool per encounter', () => {
     const objects = [obj({ id: 0, basePattern: 'always-give' }), obj({ id: 1, basePattern: 'always-give' })];
     const rng = createRng(1);
     const { objects: after, pool } = simulateRound(objects, 1000, false, rng);
     expect(after[0].lives).toBe(10);
     expect(after[1].lives).toBe(10);
-    // give/give: +2, then the universal -1 = net +1 per encounter; 10 passes of 1 encounter each.
-    expect(pool).toBe(1010);
+    // give/give: +2, then the universal -0.25 = net +1.75 per encounter, over 10 encounters =
+    // +17.5, rounded up to a whole number at the end of the round.
+    expect(pool).toBe(1018);
   });
 
-  it('a non-give/give encounter nets -1 to the pool (the universal per-encounter cost)', () => {
+  it('a non-give/give encounter nets -0.25 to the pool, rounded up only at the round\'s end', () => {
     const objects = [obj({ id: 0, basePattern: 'always-give' }), obj({ id: 1, basePattern: 'always-take' })];
     const rng = createRng(1);
-    const { pool } = simulateRound(objects, 1000, false, rng);
-    expect(pool).toBe(990);
+    const { pool, subRounds } = simulateRound(objects, 1000, false, rng);
+    // Mid-round the pool is fractional (only the final result gets rounded up)...
+    expect(subRounds[0].poolValue).toBeCloseTo(999.75);
+    // ...10 encounters of -0.25 = -2.5, then Math.ceil at the end.
+    expect(pool).toBe(998);
   });
 
-  it('caps give/give growth at POOL_MAX, oscillating just below it rather than exceeding it', () => {
+  it('caps give/give growth at POOL_MAX, rounding the plateau up to the cap at the round\'s end', () => {
     const objects = [obj({ id: 0, basePattern: 'always-give' }), obj({ id: 1, basePattern: 'always-give' })];
     const rng = createRng(21);
     const { pool } = simulateRound(objects, 9999, false, rng); // one below the cap
-    // Each encounter grows to the cap (10000), then the universal -1 pulls it back to 9999.
-    expect(pool).toBe(9999);
+    // Each encounter grows to the cap (10000) then costs -0.25, settling at 9999.75 — which
+    // Math.ceil rounds back up to exactly the cap once the round ends.
+    expect(pool).toBe(10000);
   });
 
   it('give vs take transfers a life from giver to taker', () => {
@@ -164,9 +169,9 @@ describe('gameReducer', () => {
 
   it('ends the game with no winner once the pool is depleted', () => {
     let state = createInitialState();
-    state.pool = 5; // force near-depletion
+    state.pool = 1; // force near-depletion
     // always-take vs always-take: take/take encounters aren't give/give, so they only ever cost
-    // the universal -1 (no +2 bonus) — 10 passes of 1 encounter each depletes a pool this low.
+    // the universal -0.25 (no +2 bonus) — 10 encounters of -0.25 = -2.5, easily depleting this.
     state.objects = [
       obj({ id: 0, color: 'green', basePattern: 'always-take' }),
       obj({ id: 1, color: 'blue', basePattern: 'always-take' }),
@@ -179,9 +184,10 @@ describe('gameReducer', () => {
 
   it('declares a win with a proportional split once 100 stable rounds pass', () => {
     let state = createInitialState();
-    // An all-give population never has anyone die, and the pool starts exactly at its cap —
-    // one round to settle from the cap to cap-1 (where give/give's capped growth exactly
-    // offsets the universal -1), then it holds flat there, satisfying the steady condition.
+    // An all-give population never has anyone die, and the pool starts exactly at its cap:
+    // internally each encounter dips to 9999.75 (capped growth, then the universal -0.25), but
+    // Math.ceil rounds that back up to exactly the cap at the end of every round, holding it
+    // perfectly flat from round 1 onward.
     const rng = createRng(10);
     for (let i = 0; i < 105; i++) {
       state = takeTurn(state, { type: 'decline' }, rng);
@@ -236,7 +242,7 @@ describe('gameReducer', () => {
   it('checkSustainability ends with no winner if the pool depletes during the check', () => {
     let state = createInitialState();
     // always-take vs always-take: take/take encounters aren't give/give, so they only ever cost
-    // the universal -1 (no +2 bonus) — the pool purely drains and depletes quickly.
+    // the universal -0.25 (no +2 bonus) — the pool purely drains and depletes quickly.
     state.objects = state.objects
       .filter((o) => o.color === 'blue')
       .map((o) => ({ ...o, basePattern: 'always-take' as const }));
