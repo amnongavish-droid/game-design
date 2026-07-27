@@ -77,9 +77,8 @@ export type TurnAction =
   | { type: 'pause' };
 
 export const STARTING_LIVES = 10;
-export const STARTING_POOL = 1000;
-export const POOL_MAX = 2000;
-export const POOL_DECREMENT = 200;
+export const STARTING_POOL = 10000;
+export const POOL_MAX = 10000;
 export const ENCOUNTERS_PER_ROUND = 10;
 export const OBJECTS_PER_COLOR = 1000;
 export const STEADY_ROUNDS_TO_WIN = 100;

@@ -73,10 +73,9 @@ export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameSt
     deathsThisRound,
   } = simulateRound(objects, state.pool, paused, rng);
 
-  // The pool still drains during a pause (only the encounters are skipped), so a pause always
-  // breaks the steady-state streak — it can never itself contribute progress toward a win.
-  const poolNonDecreasing = poolAfter >= poolBefore;
-  const steadyThisRound = poolNonDecreasing && deathsThisRound === 0;
+  // A "stable" round requires the pool to hold exactly steady, not merely avoid decreasing.
+  const poolUnchanged = poolAfter === poolBefore;
+  const steadyThisRound = poolUnchanged && deathsThisRound === 0;
   const steadyRoundsCount = steadyThisRound ? state.steadyRoundsCount + 1 : 0;
 
   const greenAlive = countAlive(resultObjects, 'green');

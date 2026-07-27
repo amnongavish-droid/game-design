@@ -71,22 +71,29 @@ describe('simulateRound', () => {
     }
   });
 
-  it('mutual give grows the pool and leaves lives unchanged', () => {
+  it('mutual give leaves lives unchanged and nets +1 to the pool per encounter', () => {
     const objects = [obj({ id: 0, basePattern: 'always-give' }), obj({ id: 1, basePattern: 'always-give' })];
     const rng = createRng(1);
     const { objects: after, pool } = simulateRound(objects, 1000, false, rng);
     expect(after[0].lives).toBe(10);
     expect(after[1].lives).toBe(10);
-    // 10 passes of mutual give = +10 to pool, then -200 flat decrement = net -190
-    expect(pool).toBe(810);
+    // give/give: +2, then the universal -1 = net +1 per encounter; 10 passes of 1 encounter each.
+    expect(pool).toBe(1010);
   });
 
-  it('caps the pool at 2000, never letting mutual give grow it further', () => {
+  it('a non-give/give encounter nets -1 to the pool (the universal per-encounter cost)', () => {
+    const objects = [obj({ id: 0, basePattern: 'always-give' }), obj({ id: 1, basePattern: 'always-take' })];
+    const rng = createRng(1);
+    const { pool } = simulateRound(objects, 1000, false, rng);
+    expect(pool).toBe(990);
+  });
+
+  it('caps give/give growth at POOL_MAX, oscillating just below it rather than exceeding it', () => {
     const objects = [obj({ id: 0, basePattern: 'always-give' }), obj({ id: 1, basePattern: 'always-give' })];
-    const rng = createRng(20);
-    const { pool } = simulateRound(objects, 1995, false, rng);
-    // 10 passes of +1 would reach 2005 uncapped; capped at 2000, then -200 flat decrement.
-    expect(pool).toBe(1800);
+    const rng = createRng(21);
+    const { pool } = simulateRound(objects, 9999, false, rng); // one below the cap
+    // Each encounter grows to the cap (10000), then the universal -1 pulls it back to 9999.
+    expect(pool).toBe(9999);
   });
 
   it('give vs take transfers a life from giver to taker', () => {
@@ -116,11 +123,11 @@ describe('simulateRound', () => {
     expect(afterBoth[1].lives).toBe(50); // taker gains 4/pass over 10 passes
   });
 
-  it('pausing skips all encounters but still drains the pool by the flat decrement', () => {
+  it('pausing skips all encounters and leaves the pool untouched', () => {
     const objects = [obj({ id: 0, basePattern: 'always-take' }), obj({ id: 1, basePattern: 'always-take' })];
     const rng = createRng(4);
     const { objects: after, pool, subRounds, deathsThisRound } = simulateRound(objects, 1000, true, rng);
-    expect(pool).toBe(800);
+    expect(pool).toBe(1000);
     expect(subRounds).toHaveLength(0);
     expect(deathsThisRound).toBe(0);
     expect(after[0].lives).toBe(10);
@@ -134,7 +141,7 @@ describe('gameReducer', () => {
     expect(state.objects).toHaveLength(2000);
     expect(state.objects.filter((o) => o.color === 'green')).toHaveLength(1000);
     expect(state.objects.filter((o) => o.color === 'blue')).toHaveLength(1000);
-    expect(state.pool).toBe(1000);
+    expect(state.pool).toBe(10000);
     expect(state.currentPlayer).toBe('green');
   });
 
@@ -158,7 +165,12 @@ describe('gameReducer', () => {
   it('ends the game with no winner once the pool is depleted', () => {
     let state = createInitialState();
     state.pool = 5; // force near-depletion
-    state.objects = []; // no living objects -> no encounters, pool only drops by the flat decrement
+    // always-take vs always-take: take/take encounters aren't give/give, so they only ever cost
+    // the universal -1 (no +2 bonus) — 10 passes of 1 encounter each depletes a pool this low.
+    state.objects = [
+      obj({ id: 0, color: 'green', basePattern: 'always-take' }),
+      obj({ id: 1, color: 'blue', basePattern: 'always-take' }),
+    ];
     const rng = createRng(9);
     state = takeTurn(state, { type: 'decline' }, rng);
     expect(state.status).toBe('lost');
@@ -167,10 +179,11 @@ describe('gameReducer', () => {
 
   it('declares a win with a proportional split once 100 stable rounds pass', () => {
     let state = createInitialState();
-    // No override needed: an all-give population self-sustains near the pool cap (2000) each
-    // round rather than depleting, since mutual-give growth outpaces the flat -10 decrement.
+    // An all-give population never has anyone die, and the pool starts exactly at its cap —
+    // one round to settle from the cap to cap-1 (where give/give's capped growth exactly
+    // offsets the universal -1), then it holds flat there, satisfying the steady condition.
     const rng = createRng(10);
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 105; i++) {
       state = takeTurn(state, { type: 'decline' }, rng);
       if (state.status !== 'in-progress') break;
     }
@@ -179,12 +192,21 @@ describe('gameReducer', () => {
     expect(state.winner!.greenPct + state.winner!.bluePct).toBeCloseTo(100);
   });
 
-  it('pause does not run a simulation but still drains the pool by the flat decrement', () => {
+  it('a round where the pool grows does not count as stable (must hold exactly steady)', () => {
+    let state = createInitialState();
+    state.pool = 100; // well below the cap, so give/give still has room to grow it
+    const rng = createRng(16);
+    state = takeTurn(state, { type: 'decline' }, rng);
+    expect(state.pool).toBeGreaterThan(100); // confirms the pool did in fact grow this round
+    expect(state.steadyRoundsCount).toBe(0);
+  });
+
+  it('pause does not run a simulation and leaves the pool untouched', () => {
     let state = createInitialState();
     const poolBefore = state.pool;
     const rng = createRng(11);
     state = takeTurn(state, { type: 'pause' }, rng);
-    expect(state.pool).toBe(poolBefore - 200);
+    expect(state.pool).toBe(poolBefore);
     expect(state.lastResult?.paused).toBe(true);
     expect(state.lastResult?.subRounds).toHaveLength(0);
   });
@@ -201,8 +223,9 @@ describe('gameReducer', () => {
 
   it('checkSustainability declares the survivor a winner after 10 clean rounds, without needing a 100-round streak', () => {
     let state = createInitialState();
-    state.objects = state.objects.filter((o) => o.color === 'blue'); // green already eliminated
-    state.pool = 100000; // avoid depletion for this test
+    // green already eliminated; an all-give survivor nets +1 to the pool per encounter, so no
+    // pool override is needed to keep it alive through the check.
+    state.objects = state.objects.filter((o) => o.color === 'blue');
     const rng = createRng(14);
     const result = checkSustainability(state, rng);
     expect(result.status).toBe('won');
@@ -212,8 +235,8 @@ describe('gameReducer', () => {
 
   it('checkSustainability ends with no winner if the pool depletes during the check', () => {
     let state = createInitialState();
-    // always-take vs always-take: no give-give growth to offset the flat decrement, so the
-    // pool purely drains and depletes quickly, isolating this from the pool-cap/growth path.
+    // always-take vs always-take: take/take encounters aren't give/give, so they only ever cost
+    // the universal -1 (no +2 bonus) — the pool purely drains and depletes quickly.
     state.objects = state.objects
       .filter((o) => o.color === 'blue')
       .map((o) => ({ ...o, basePattern: 'always-take' as const }));

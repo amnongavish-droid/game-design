@@ -6,16 +6,19 @@ decision rule (or double the stakes, decline, or pause), confirm it, then watch
 the round's encounters play out — every living object has 10 random encounters
 against the pooled 2000 objects, of either color:
 
-- give + give → shared central pool grows, no life change
+- give + give → no life change, and nets the shared pool +1 (+2, then the -1 below)
 - give + take → giver loses a life, taker gains one
 - take + take → both lose a life
 
-A central livelihood pool starts at 1000, is capped at 2000, and drops by 200
-each round that's actually played. If it hits 0, the game ends with no winner.
-If 100 consecutive rounds pass with no deaths and the pool not decreasing, the
-game is won and 100 points are split by the surviving color ratio. If one color
-is wiped out, a "Check Sustainability" button appears for the other — it plays
-10 rounds and declares a winner if that color survives them intact.
+Every encounter — whatever the decisions — costs the shared livelihood pool 1,
+so give/give nets +1 overall while every other outcome nets -1. The pool starts
+at 10000, is capped at 10000 (give/give can't grow it further once there), and
+only ever moves through these per-encounter effects — there's no separate
+per-round decrement. If it hits 0, the game ends with no winner. If 100
+consecutive rounds pass with no deaths and the pool exactly unchanged, the game
+is won and 100 points are split by the surviving color ratio. If one color is
+wiped out, a "Check Sustainability" button appears for the other — it plays 10
+rounds and declares a winner if that color survives them intact.
 
 ## Running it
 

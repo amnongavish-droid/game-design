@@ -1,7 +1,7 @@
 import { POOL_MAX } from '../../engine/types';
 
-const SCALE_MAX = POOL_MAX; // the gauge's top end matches the hard gameplay cap on the pool
-const TICK_STEP = 500;
+const SCALE_MAX = POOL_MAX;
+const TICK_STEP = 1000;
 
 const STOPS: { ratio: number; color: [number, number, number] }[] = [
   { ratio: 0, color: [179, 69, 47] }, // garnet

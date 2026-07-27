@@ -1,13 +1,6 @@
 import { decide, updateHistory } from './rules';
 import { shuffle, type Rng } from './rng';
-import {
-  ENCOUNTERS_PER_ROUND,
-  POOL_DECREMENT,
-  POOL_MAX,
-  type GameObject,
-  type ObjectSnapshot,
-  type SubRoundStat,
-} from './types';
+import { ENCOUNTERS_PER_ROUND, POOL_MAX, type GameObject, type ObjectSnapshot, type SubRoundStat } from './types';
 
 export interface SimulateRoundOutput {
   objects: GameObject[];
@@ -50,8 +43,9 @@ export function simulateRound(
         let deltaA = 0;
         let deltaB = 0;
         if (decisionA === 'give' && decisionB === 'give') {
-          // Capped at POOL_MAX — the pool can't grow past it, though it can still drain below it.
-          currentPool = currentPool >= POOL_MAX ? currentPool : Math.min(currentPool + mult, POOL_MAX);
+          // Give/give still grows the pool by 2 (capped at POOL_MAX) — on top of (not instead
+          // of) the universal -1 per-encounter cost below, netting +1 while below the cap.
+          currentPool = currentPool >= POOL_MAX ? currentPool : Math.min(currentPool + 2, POOL_MAX);
         } else if (decisionA === 'give' && decisionB === 'take') {
           deltaA = -mult;
           deltaB = mult;
@@ -67,6 +61,9 @@ export function simulateRound(
         b.lives += deltaB;
         updateHistory(a, decisionA, deltaA);
         updateHistory(b, decisionB, deltaB);
+
+        // Every encounter automatically costs the shared pool 1, independent of decisions/doubles.
+        currentPool -= 1;
       }
 
       for (const o of working) {
@@ -81,9 +78,8 @@ export function simulateRound(
       passObjectStates.push(working.map((o) => ({ id: o.id, lives: o.lives, alive: o.alive })));
     }
   }
-
-  // The pool drains by a flat amount every round, paused or not — only the encounters are skipped.
-  currentPool -= POOL_DECREMENT;
+  // Paused rounds have no encounters, so the pool is untouched — there's no separate flat
+  // per-round decrement anymore, only the per-encounter cost above.
 
   return { objects: working, pool: currentPool, subRounds, passObjectStates, deathsThisRound };
 }
