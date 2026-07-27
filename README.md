@@ -10,7 +10,7 @@ against the pooled 2000 objects, of either color:
 - give + take → giver loses a life, taker gains one
 - take + take → both lose a life
 
-A central livelihood pool starts at 1000, is capped at 2000, and drops by 100
+A central livelihood pool starts at 1000, is capped at 2000, and drops by 200
 each round that's actually played. If it hits 0, the game ends with no winner.
 If 100 consecutive rounds pass with no deaths and the pool not decreasing, the
 game is won and 100 points are split by the surviving color ratio. If one color

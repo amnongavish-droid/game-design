@@ -77,16 +77,16 @@ describe('simulateRound', () => {
     const { objects: after, pool } = simulateRound(objects, 1000, false, rng);
     expect(after[0].lives).toBe(10);
     expect(after[1].lives).toBe(10);
-    // 10 passes of mutual give = +10 to pool, then -100 flat decrement = net -90
-    expect(pool).toBe(910);
+    // 10 passes of mutual give = +10 to pool, then -200 flat decrement = net -190
+    expect(pool).toBe(810);
   });
 
   it('caps the pool at 2000, never letting mutual give grow it further', () => {
     const objects = [obj({ id: 0, basePattern: 'always-give' }), obj({ id: 1, basePattern: 'always-give' })];
     const rng = createRng(20);
     const { pool } = simulateRound(objects, 1995, false, rng);
-    // 10 passes of +1 would reach 2005 uncapped; capped at 2000, then -100 flat decrement.
-    expect(pool).toBe(1900);
+    // 10 passes of +1 would reach 2005 uncapped; capped at 2000, then -200 flat decrement.
+    expect(pool).toBe(1800);
   });
 
   it('give vs take transfers a life from giver to taker', () => {
@@ -120,7 +120,7 @@ describe('simulateRound', () => {
     const objects = [obj({ id: 0, basePattern: 'always-take' }), obj({ id: 1, basePattern: 'always-take' })];
     const rng = createRng(4);
     const { objects: after, pool, subRounds, deathsThisRound } = simulateRound(objects, 1000, true, rng);
-    expect(pool).toBe(900);
+    expect(pool).toBe(800);
     expect(subRounds).toHaveLength(0);
     expect(deathsThisRound).toBe(0);
     expect(after[0].lives).toBe(10);
@@ -184,7 +184,7 @@ describe('gameReducer', () => {
     const poolBefore = state.pool;
     const rng = createRng(11);
     state = takeTurn(state, { type: 'pause' }, rng);
-    expect(state.pool).toBe(poolBefore - 100);
+    expect(state.pool).toBe(poolBefore - 200);
     expect(state.lastResult?.paused).toBe(true);
     expect(state.lastResult?.subRounds).toHaveLength(0);
   });
