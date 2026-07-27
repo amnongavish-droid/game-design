@@ -4,7 +4,7 @@ import { createRng, type Rng } from '../engine/rng';
 import type { Color, GameObject, GameState, RoundResult, TurnAction } from '../engine/types';
 import { playCardClick, startSimulationSoundtrack, stopSimulationSoundtrack } from '../audio/sound';
 
-const SIMULATION_DURATION_MS = 5000;
+export const SIMULATION_DURATION_MS = 5000;
 
 export interface DisplayObject {
   id: number;
@@ -127,6 +127,15 @@ export function useGame(soundEnabled: boolean) {
     return base.map((o, i) => ({ id: o.id, color: o.color, lives: snap[i].lives, alive: snap[i].alive }));
   }, [state.objects, playback]);
 
+  // The round's starting point — the field animates from this layout, through a mixed
+  // waypoint, to the current (converging-on-final) `displayObjects` layout.
+  const fromObjects: DisplayObject[] = useMemo(() => {
+    if (!playback) {
+      return state.objects.map((o) => ({ id: o.id, color: o.color, lives: o.lives, alive: o.alive }));
+    }
+    return playback.preRoundObjects.map((o) => ({ id: o.id, color: o.color, lives: o.lives, alive: o.alive }));
+  }, [state.objects, playback]);
+
   const displayPool: number = useMemo(() => {
     if (!playback) return state.pool;
     if (playback.passIndex < 0) return playback.result.logEntry.poolBefore;
@@ -141,6 +150,7 @@ export function useGame(soundEnabled: boolean) {
   return {
     state,
     displayObjects,
+    fromObjects,
     displayPool,
     isSimulating,
     progress,

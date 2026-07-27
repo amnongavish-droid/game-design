@@ -14,7 +14,7 @@ export function playCardClick(): void {
   osc.type = 'triangle';
   osc.frequency.setValueAtTime(720, ac.currentTime);
   osc.frequency.exponentialRampToValueAtTime(420, ac.currentTime + 0.08);
-  gain.gain.setValueAtTime(0.18, ac.currentTime);
+  gain.gain.setValueAtTime(0.32, ac.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.09);
   osc.connect(gain).connect(ac.destination);
   osc.start();
@@ -34,7 +34,7 @@ export function startSimulationSoundtrack(): void {
 
   const master = ac.createGain();
   master.gain.setValueAtTime(0, ac.currentTime);
-  master.gain.linearRampToValueAtTime(0.05, ac.currentTime + 0.3);
+  master.gain.linearRampToValueAtTime(0.09, ac.currentTime + 0.3);
   master.connect(ac.destination);
 
   const nodes: OscillatorNode[] = [];

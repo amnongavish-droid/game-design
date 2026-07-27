@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { DisplayObject } from '../../state/useGame';
-import { FIELD_POSITIONS } from './fieldLayout';
+import { SIMULATION_DURATION_MS } from '../../state/useGame';
+import { MIXED_POSITIONS, groupedPosition } from './fieldLayout';
 
 const COLORS = {
   green: { strong: '#15803d', mid: '#4ade80', faded: '#bbf7d0' },
@@ -67,14 +68,28 @@ function drawDrifter(ctx: CanvasRenderingContext2D, x: number, y: number, rotati
   ctx.restore();
 }
 
-interface Props {
-  objects: DisplayObject[];
+function easeInOut(t: number): number {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 }
 
-export function FieldCanvas({ objects }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+interface Props {
+  /** Current per-pass snapshot — drives each dot's color/tier, and (as it converges pass by
+   * pass) the settled position it's animating toward. */
+  objects: DisplayObject[];
+  /** The round's starting snapshot — the settled position it's animating from. Equal to
+   * `objects` whenever the field isn't mid-round. */
+  fromObjects: DisplayObject[];
+  isSimulating: boolean;
+}
 
-  useEffect(() => {
+export function FieldCanvas({ objects, fromObjects, isSimulating }: Props) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const objectsRef = useRef(objects);
+  const fromRef = useRef(fromObjects);
+  objectsRef.current = objects;
+  fromRef.current = fromObjects;
+
+  const drawFrame = (mix: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -100,16 +115,65 @@ export function FieldCanvas({ objects }: Props) {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, width, height);
 
-    for (const obj of objects) {
+    const fromById = new Map(fromRef.current.map((o) => [o.id, o] as const));
+
+    for (const obj of objectsRef.current) {
       if (!obj.alive) continue;
-      const pos = FIELD_POSITIONS[obj.id];
-      if (!pos) continue;
+
+      const toPos = groupedPosition(obj.id, obj.color, obj.lives);
+      let px = toPos.x;
+      let py = toPos.y;
+
+      if (mix < 1) {
+        const fromO = fromById.get(obj.id);
+        const fromPos = fromO && fromO.alive ? groupedPosition(obj.id, fromO.color, fromO.lives) : toPos;
+        const mixedPos = MIXED_POSITIONS[obj.id] ?? toPos;
+        if (mix < 0.5) {
+          const t = easeInOut(mix / 0.5);
+          px = fromPos.x + (mixedPos.x - fromPos.x) * t;
+          py = fromPos.y + (mixedPos.y - fromPos.y) * t;
+        } else {
+          const t = easeInOut((mix - 0.5) / 0.5);
+          px = mixedPos.x + (toPos.x - mixedPos.x) * t;
+          py = mixedPos.y + (toPos.y - mixedPos.y) * t;
+        }
+      }
+
       const tier = tierFor(obj.lives);
-      drawDrifter(ctx, pos.x * width, pos.y * height, pos.rotation, COLORS[obj.color][tier]);
+      const rotation = MIXED_POSITIONS[obj.id]?.rotation ?? 0;
+      drawDrifter(ctx, px * width, py * height, rotation, COLORS[obj.color][tier]);
     }
 
     ctx.restore();
-  }, [objects]);
+  };
+
+  // Continuous "mixing" animation for the duration of a round's playback, independent of the
+  // discrete per-pass data updates above (which only refine where it's converging to). Uses
+  // setTimeout rather than requestAnimationFrame — rAF is suspended by browsers whenever the
+  // tab/pane isn't the visibly composited one, which would silently freeze this animation.
+  useEffect(() => {
+    if (!isSimulating) {
+      drawFrame(1);
+      return;
+    }
+    const stepMs = 50;
+    let timerId = 0;
+    const start = performance.now();
+    const tick = () => {
+      const mix = Math.min((performance.now() - start) / SIMULATION_DURATION_MS, 1);
+      drawFrame(mix);
+      if (mix < 1) timerId = window.setTimeout(tick, stepMs);
+    };
+    timerId = window.setTimeout(tick, stepMs);
+    return () => clearTimeout(timerId);
+  }, [isSimulating]);
+
+  // Redraw immediately when settled and the data changes (undo, reset, incremental pass
+  // reveals) — the effect above only restarts when `isSimulating` itself flips.
+  useEffect(() => {
+    if (isSimulating) return;
+    drawFrame(1);
+  }, [objects, fromObjects, isSimulating]);
 
   return <canvas ref={canvasRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} className="field-canvas" />;
 }

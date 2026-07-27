@@ -12,6 +12,7 @@ export function PlayerView({ game }: { game: UseGame }) {
   const {
     state,
     displayObjects,
+    fromObjects,
     displayPool,
     isSimulating,
     progress,
@@ -65,7 +66,7 @@ export function PlayerView({ game }: { game: UseGame }) {
         </div>
 
         <div className="field-wrapper">
-          <FieldCanvas objects={displayObjects} />
+          <FieldCanvas objects={displayObjects} fromObjects={fromObjects} isSimulating={isSimulating} />
           {isSimulating && progress && <SimulationOverlay pass={progress.pass} totalPasses={progress.totalPasses} />}
         </div>
 
