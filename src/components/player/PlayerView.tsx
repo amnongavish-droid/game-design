@@ -7,6 +7,7 @@ import { ResultOverlay } from './ResultOverlay';
 import { StartScreen } from './StartScreen';
 import { ColorPanel } from './ColorPanel';
 import { Thermometer } from './Thermometer';
+import { WildCardControl } from './WildCardControl';
 
 export function PlayerView({ game }: { game: UseGame }) {
   const {
@@ -45,6 +46,15 @@ export function PlayerView({ game }: { game: UseGame }) {
       <div className="top-row">
         <StatsBar round={state.round} steadyRoundsCount={state.steadyRoundsCount} />
         <Thermometer pool={displayPool} />
+        {state.status === 'in-progress' && !oneColorEliminated && (
+          <WildCardControl
+            pool={displayPool}
+            objects={displayObjects}
+            pendingAction={pendingAction}
+            onSelect={selectAction}
+            disabled={controlsDisabled}
+          />
+        )}
       </div>
 
       <div className="field-row">

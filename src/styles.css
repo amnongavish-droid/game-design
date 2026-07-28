@@ -80,6 +80,66 @@ button:not(:disabled):hover {
   border-radius: 8px;
 }
 
+.wild-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: #1e293b;
+  border: 1px solid var(--plate-edge);
+  border-radius: 8px;
+  min-width: 200px;
+  text-align: center;
+}
+
+.wild-card--selected {
+  border-color: var(--ember);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ember) 45%, transparent);
+}
+
+.wild-card__button {
+  background: var(--ember);
+  border-color: var(--ember);
+  color: #2a1400;
+  font-weight: 600;
+}
+
+.wild-card__button:not(:disabled):hover {
+  background: #f6a15c;
+}
+
+.wild-card__caption {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--bone-dim);
+  line-height: 1.4;
+}
+
+.wild-card__scroller {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.wild-card__scroller input[type='range'] {
+  width: 100%;
+}
+
+.wild-card__readout {
+  margin: 0;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.wild-card__hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--garnet);
+}
+
 /* ---------- Field ---------- */
 
 .field-row {

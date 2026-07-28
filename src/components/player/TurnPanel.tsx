@@ -12,6 +12,8 @@ function actionToCardId(action: TurnAction): string {
       return 'pause';
     case 'decline':
       return 'decline';
+    case 'wild-card':
+      return 'wild-card';
   }
 }
 

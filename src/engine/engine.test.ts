@@ -188,6 +188,64 @@ describe('gameReducer', () => {
     expect(entry.takeTakeCount).toBe(0);
   });
 
+  it('wild card boosts every living object of both colors, capped at STARTING_LIVES, costing the pool the actual total gained, with no encounter simulation that turn', () => {
+    let state = createInitialState();
+    state.objects = [
+      obj({ id: 0, color: 'green', lives: 3, basePattern: 'always-give' }),
+      obj({ id: 1, color: 'blue', lives: 9, basePattern: 'always-give' }), // near cap: gains only 1 of the requested 5
+    ];
+    state.pool = 100;
+    const rng = createRng(18);
+    state = takeTurn(state, { type: 'wild-card', livesPerObject: 5 }, rng);
+    // No encounters run on a wild-card turn, so the final lives are purely the wild card's effect.
+    expect(state.objects[0].lives).toBe(8); // 3 + 5 (full request)
+    expect(state.objects[1].lives).toBe(10); // 9 + 1 (capped, not the full 5)
+    // wild card cost = 5 + 1 = 6, and nothing else touches the pool since no round is simulated.
+    expect(state.log[0].poolBefore).toBe(100);
+    expect(state.pool).toBe(94);
+    // The round counter only tracks simulations actually played — a wild card doesn't run one.
+    expect(state.round).toBe(0);
+  });
+
+  it('does not reduce an object already above STARTING_LIVES back down to the cap', () => {
+    let state = createInitialState();
+    state.objects = [obj({ id: 0, color: 'green', lives: 14, basePattern: 'always-give' })];
+    state.pool = 100;
+    const rng = createRng(20);
+    state = takeTurn(state, { type: 'wild-card', livesPerObject: 1 }, rng);
+    expect(state.objects[0].lives).toBe(14); // already above cap: no boost, no cost
+    expect(state.pool).toBe(100);
+  });
+
+  it('switches the turn after a wild card, like any other action', () => {
+    let state = createInitialState();
+    const rng = createRng(19);
+    expect(state.currentPlayer).toBe('green');
+    state = takeTurn(state, { type: 'wild-card', livesPerObject: 1 }, rng);
+    expect(state.currentPlayer).toBe('blue');
+  });
+
+  it('resets an active double when the rule is changed', () => {
+    let state = createInitialState();
+    const rng = createRng(21);
+    const green = () => state.objects.find((o) => o.color === 'green')!;
+    state = takeTurn(state, { type: 'toggle-double' }, rng); // green's turn -> blue's turn
+    expect(green().doubleActive).toBe(true);
+    state = takeTurn(state, { type: 'decline' }, rng); // blue's turn -> green's turn
+    state = takeTurn(state, { type: 'play-rule', rule: 'always-take' }, rng); // green changes rule
+    expect(green().doubleActive).toBe(false);
+  });
+
+  it('does not advance the round counter for a paused turn', () => {
+    let state = createInitialState();
+    const rng = createRng(22);
+    expect(state.round).toBe(0);
+    state = takeTurn(state, { type: 'pause' }, rng);
+    expect(state.round).toBe(0);
+    state = takeTurn(state, { type: 'decline' }, rng);
+    expect(state.round).toBe(1);
+  });
+
   it('alternates the current player after each turn', () => {
     let state = createInitialState();
     const rng = createRng(7);

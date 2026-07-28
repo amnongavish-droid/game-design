@@ -25,6 +25,23 @@ ratio. If one color is wiped out, a "Check Sustainability" button appears for
 the other — it plays 10 rounds and declares a winner if that color survives
 them intact.
 
+Playing a new base-pattern card always resets that color's double-stakes
+modifier — a double only carries over across a decline/pause, not across a
+rule change. The **Round** counter (and the round number logged to the CSV)
+only counts turns where an encounter simulation actually ran — pausing or
+playing the wild card doesn't advance it.
+
+## Wild card
+
+Instead of playing a card, either player can spend their turn on the wild
+card: pick, via a slider, how many lives (1–10) to give to *every* living
+object of *both* colors, paid for out of the shared pool at exactly that
+total cost (an object already at or past 10 lives is topped up by less, or
+not at all, and costs accordingly). The slider's range is capped so the total
+can never exceed what's currently in the pool. Playing it still uses the
+whole turn — no encounter round is simulated, and play passes to the other
+color immediately.
+
 ## Running it
 
 ```

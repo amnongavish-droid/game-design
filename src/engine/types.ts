@@ -85,7 +85,8 @@ export type TurnAction =
   | { type: 'play-rule'; rule: RuleName }
   | { type: 'toggle-double' }
   | { type: 'decline' }
-  | { type: 'pause' };
+  | { type: 'pause' }
+  | { type: 'wild-card'; livesPerObject: number };
 
 export const STARTING_LIVES = 10;
 export const STARTING_POOL = 10000;

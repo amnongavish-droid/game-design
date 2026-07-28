@@ -70,6 +70,8 @@ function describeAction(action: TurnAction): string {
       return 'decline';
     case 'pause':
       return 'pause';
+    case 'wild-card':
+      return `wild-card:${action.livesPerObject}`;
   }
 }
 
@@ -79,16 +81,33 @@ export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameSt
   const objects = state.objects.map((o) => ({ ...o }));
   const isCurrentPlayerObject = (o: GameObject) => o.color === state.currentPlayer;
 
+  // The wild card benefits every living object of both colors, whoever plays it — paid for
+  // out of the shared pool, capped so no object ever exceeds STARTING_LIVES. Objects that
+  // already sit at or above that cap (lives can climb past STARTING_LIVES during normal play)
+  // get no further boost rather than a negative one.
+  let wildCardCost = 0;
   if (action.type === 'play-rule') {
-    for (const o of objects) if (isCurrentPlayerObject(o)) o.basePattern = action.rule;
+    for (const o of objects) {
+      if (!isCurrentPlayerObject(o)) continue;
+      o.basePattern = action.rule;
+      o.doubleActive = false; // a rule change drops any double in effect for that color
+    }
   } else if (action.type === 'toggle-double') {
     for (const o of objects) if (isCurrentPlayerObject(o)) o.doubleActive = !o.doubleActive;
+  } else if (action.type === 'wild-card') {
+    for (const o of objects) {
+      if (!o.alive) continue;
+      const boosted = Math.max(o.lives, Math.min(o.lives + action.livesPerObject, STARTING_LIVES));
+      wildCardCost += boosted - o.lives;
+      o.lives = boosted;
+    }
   }
-  // 'decline': no rule change, round still runs. 'pause': no rule change, round skipped below.
-
-  const paused = action.type === 'pause';
-  const roundNumber = state.round + 1;
+  // 'decline': no rule change, round still runs. 'pause'/'wild-card': no encounter simulation
+  // this turn, so the round counter (number of simulations played) does not advance either.
+  const skipSimulation = action.type === 'pause' || action.type === 'wild-card';
+  const roundNumber = skipSimulation ? state.round : state.round + 1;
   const poolBefore = state.pool;
+  const poolForRound = poolBefore - wildCardCost;
 
   const {
     objects: resultObjects,
@@ -99,7 +118,7 @@ export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameSt
     giveGiveCount,
     takeGiveCount,
     takeTakeCount,
-  } = simulateRound(objects, state.pool, paused, rng);
+  } = simulateRound(objects, poolForRound, skipSimulation, rng);
 
   // A "stable" round requires the pool to hold exactly steady, not merely avoid decreasing.
   const poolUnchanged = poolAfter === poolBefore;
@@ -128,7 +147,7 @@ export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameSt
 
   const logEntry: RoundLogEntry = {
     round: roundNumber,
-    paused,
+    paused: skipSimulation,
     cardPlayer: state.currentPlayer,
     cardPlayed: describeAction(action),
     greenPattern: green.pattern,
@@ -149,7 +168,7 @@ export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameSt
     status,
   };
 
-  const result: RoundResult = { roundNumber, paused, subRounds, passObjectStates, logEntry };
+  const result: RoundResult = { roundNumber, paused: skipSimulation, subRounds, passObjectStates, logEntry };
 
   return {
     round: roundNumber,
