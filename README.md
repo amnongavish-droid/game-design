@@ -4,7 +4,9 @@ A 2-player strategy/simulation game. Green and Blue each start with 1000 objects
 (10 lives each). On your turn you select a card that sets your objects' give/take
 decision rule (or double the stakes, decline, or pause), confirm it, then watch
 the round's encounters play out — every living object has 10 random encounters
-against the pooled 2000 objects, of either color:
+against the pooled 2000 objects, of either color. If the same two objects are
+paired again later in the same round, that repeat still counts as one of
+their 10 encounters, but its outcome is ignored (no life or pool change):
 
 - give + give → no life change, and nets the shared pool +1.5 (+2, then the -0.5 below)
 - give + take → giver loses a life, taker gains one

@@ -71,14 +71,30 @@ describe('simulateRound', () => {
     }
   });
 
-  it('mutual give leaves lives unchanged and nets +1.5 to the pool per encounter', () => {
+  it('ignores the outcome of a repeat encounter between the same two objects within a round', () => {
+    const objects = [obj({ id: 0, basePattern: 'always-take' }), obj({ id: 1, color: 'blue', basePattern: 'always-take' })];
+    const rng = createRng(30);
+    const { objects: after, subRounds } = simulateRound(objects, 1000, false, rng);
+    // Only 2 objects exist, so every one of the 10 passes is forced to re-pair them — only the
+    // first (fresh) pairing has any effect; every later pass is a counted-but-ignored repeat.
+    expect(after[0].lives).toBe(9); // take/take: -1 from the one effective encounter only
+    expect(after[1].lives).toBe(9);
+    for (let i = 1; i < subRounds.length; i++) {
+      expect(subRounds[i].poolValue).toBe(subRounds[0].poolValue);
+      expect(subRounds[i].greenLivesTotal).toBe(subRounds[0].greenLivesTotal);
+      expect(subRounds[i].blueLivesTotal).toBe(subRounds[0].blueLivesTotal);
+    }
+  });
+
+  it('mutual give leaves lives unchanged and nets +1.5 to the pool from their one effective encounter', () => {
     const objects = [obj({ id: 0, basePattern: 'always-give' }), obj({ id: 1, basePattern: 'always-give' })];
     const rng = createRng(1);
     const { objects: after, pool } = simulateRound(objects, 1000, false, rng);
     expect(after[0].lives).toBe(10);
     expect(after[1].lives).toBe(10);
-    // give/give: +2, then the universal -0.5 = net +1.5 per encounter, over 10 encounters = +15.
-    expect(pool).toBe(1015);
+    // Only their first pairing counts (the rest are ignored repeats): give/give +2, then the
+    // universal -0.5 = net +1.5, rounded up to a whole number.
+    expect(pool).toBe(1002);
   });
 
   it('a non-give/give encounter nets -0.5 to the pool, rounded up only at the round\'s end', () => {
@@ -87,26 +103,26 @@ describe('simulateRound', () => {
     const { pool, subRounds } = simulateRound(objects, 1000, false, rng);
     // Mid-round the pool is fractional (only the final result gets rounded up)...
     expect(subRounds[0].poolValue).toBeCloseTo(999.5);
-    // ...10 encounters of -0.5 = -5, then Math.ceil at the end (already a whole number here).
-    expect(pool).toBe(995);
+    // ...their one effective encounter costs -0.5, then Math.ceil at the round's end.
+    expect(pool).toBe(1000);
   });
 
   it('caps give/give growth at POOL_MAX, rounding the plateau up to the cap at the round\'s end', () => {
     const objects = [obj({ id: 0, basePattern: 'always-give' }), obj({ id: 1, basePattern: 'always-give' })];
     const rng = createRng(21);
     const { pool } = simulateRound(objects, 9999, false, rng); // one below the cap
-    // Each encounter grows to the cap (10000) then costs -0.5, settling at 9999.5 — which
-    // Math.ceil rounds back up to exactly the cap once the round ends.
+    // Their one effective encounter grows to the cap (10000) then costs -0.5, landing at
+    // 9999.5 — which Math.ceil rounds back up to exactly the cap once the round ends.
     expect(pool).toBe(10000);
   });
 
-  it('give vs take transfers a life from giver to taker', () => {
+  it('give vs take transfers a life from giver to taker (their one effective encounter)', () => {
     const objects = [obj({ id: 0, basePattern: 'always-give' }), obj({ id: 1, basePattern: 'always-take' })];
     const rng = createRng(2);
     const { objects: after } = simulateRound(objects, 1000, false, rng);
-    expect(after[0].lives).toBe(0); // giver lost 1 life per pass over 10 passes
-    expect(after[1].lives).toBe(20); // taker gained 1 life per pass over 10 passes
-    expect(after[0].alive).toBe(false);
+    expect(after[0].lives).toBe(9); // giver loses 1 from their one effective encounter
+    expect(after[1].lives).toBe(11); // taker gains 1 from that same encounter
+    expect(after[0].alive).toBe(true);
   });
 
   it('double combines multiplicatively across both sides: 2x with one side, 4x with both', () => {
@@ -115,16 +131,16 @@ describe('simulateRound', () => {
       obj({ id: 1, basePattern: 'always-take' }),
     ];
     const { objects: afterOne } = simulateRound(oneDoubled, 1000, false, createRng(3));
-    expect(afterOne[0].lives).toBe(80); // giver loses 2/pass over 10 passes
-    expect(afterOne[1].lives).toBe(30); // taker also gains the combined 2x, not its own (1x)
+    expect(afterOne[0].lives).toBe(98); // giver loses 2 from their one effective encounter
+    expect(afterOne[1].lives).toBe(12); // taker also gains the combined 2x, not its own (1x)
 
     const bothDoubled = [
       obj({ id: 0, basePattern: 'always-give', doubleActive: true, lives: 100 }),
       obj({ id: 1, basePattern: 'always-take', doubleActive: true }),
     ];
     const { objects: afterBoth } = simulateRound(bothDoubled, 1000, false, createRng(3));
-    expect(afterBoth[0].lives).toBe(60); // giver loses 4/pass (2x2) over 10 passes
-    expect(afterBoth[1].lives).toBe(50); // taker gains 4/pass over 10 passes
+    expect(afterBoth[0].lives).toBe(96); // giver loses 4 (2x2) from their one effective encounter
+    expect(afterBoth[1].lives).toBe(14); // taker gains 4 from that same encounter
   });
 
   it('pausing skips all encounters and leaves the pool untouched', () => {
@@ -168,9 +184,10 @@ describe('gameReducer', () => {
 
   it('ends the game with no winner once the pool is depleted', () => {
     let state = createInitialState();
-    state.pool = 1; // force near-depletion
-    // always-take vs always-take: take/take encounters aren't give/give, so they only ever cost
-    // the universal -0.5 (no +2 bonus) — 10 encounters of -0.5 = -5, easily depleting this.
+    state.pool = 0; // force near-depletion
+    // always-take vs always-take: only their one effective encounter counts (the rest of the
+    // 10 passes are ignored repeats between the same two objects) — take/take isn't give/give,
+    // so it only ever costs the universal -0.5, easily depleting a pool already at 0.
     state.objects = [
       obj({ id: 0, color: 'green', basePattern: 'always-take' }),
       obj({ id: 1, color: 'blue', basePattern: 'always-take' }),

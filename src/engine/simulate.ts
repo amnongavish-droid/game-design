@@ -22,6 +22,10 @@ export function simulateRound(
   const passObjectStates: ObjectSnapshot[][] = [];
   let currentPool = pool;
   let deathsThisRound = 0;
+  // Tracks every pair that has already encountered each other earlier in this same simulation
+  // (reset per round) — a repeat pairing still counts as that pass's encounter for both objects,
+  // it just has no further effect.
+  const metPairs = new Set<string>();
 
   if (!paused) {
     for (let pass = 0; pass < ENCOUNTERS_PER_ROUND; pass++) {
@@ -32,6 +36,10 @@ export function simulateRound(
       for (let i = 0; i + 1 < shuffled.length; i += 2) {
         const a = shuffled[i];
         const b = shuffled[i + 1];
+        const pairKey = a.id < b.id ? `${a.id}:${b.id}` : `${b.id}:${a.id}`;
+        if (metPairs.has(pairKey)) continue; // already met this simulation — no effect
+        metPairs.add(pairKey);
+
         const decisionA = decide(a);
         const decisionB = decide(b);
         // Double stacks multiplicatively across both sides of the encounter: neither -> 1x,
