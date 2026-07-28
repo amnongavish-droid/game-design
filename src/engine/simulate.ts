@@ -44,7 +44,7 @@ export function simulateRound(
         let deltaB = 0;
         if (decisionA === 'give' && decisionB === 'give') {
           // Give/give still grows the pool by 2 (capped at POOL_MAX) — on top of (not instead
-          // of) the universal -0.25 per-encounter cost below, netting +1.75 while below the cap.
+          // of) the universal -0.5 per-encounter cost below, netting +1.5 while below the cap.
           currentPool = currentPool >= POOL_MAX ? currentPool : Math.min(currentPool + 2, POOL_MAX);
         } else if (decisionA === 'give' && decisionB === 'take') {
           deltaA = -mult;
@@ -62,8 +62,8 @@ export function simulateRound(
         updateHistory(a, decisionA, deltaA);
         updateHistory(b, decisionB, deltaB);
 
-        // Every encounter automatically costs the shared pool 0.25, independent of decisions/doubles.
-        currentPool -= 0.25;
+        // Every encounter automatically costs the shared pool 0.5, independent of decisions/doubles.
+        currentPool -= 0.5;
       }
 
       for (const o of working) {
@@ -79,7 +79,7 @@ export function simulateRound(
     }
   }
   // Paused rounds have no encounters, so the pool is untouched — there's no separate flat
-  // per-round decrement anymore, only the per-encounter cost above. The fractional -0.25 costs
+  // per-round decrement anymore, only the per-encounter cost above. The fractional -0.5 costs
   // accumulate through the round, then round up to a whole number once the round is done.
   currentPool = Math.ceil(currentPool);
 

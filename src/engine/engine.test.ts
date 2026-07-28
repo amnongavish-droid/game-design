@@ -71,32 +71,31 @@ describe('simulateRound', () => {
     }
   });
 
-  it('mutual give leaves lives unchanged and nets +1.75 to the pool per encounter', () => {
+  it('mutual give leaves lives unchanged and nets +1.5 to the pool per encounter', () => {
     const objects = [obj({ id: 0, basePattern: 'always-give' }), obj({ id: 1, basePattern: 'always-give' })];
     const rng = createRng(1);
     const { objects: after, pool } = simulateRound(objects, 1000, false, rng);
     expect(after[0].lives).toBe(10);
     expect(after[1].lives).toBe(10);
-    // give/give: +2, then the universal -0.25 = net +1.75 per encounter, over 10 encounters =
-    // +17.5, rounded up to a whole number at the end of the round.
-    expect(pool).toBe(1018);
+    // give/give: +2, then the universal -0.5 = net +1.5 per encounter, over 10 encounters = +15.
+    expect(pool).toBe(1015);
   });
 
-  it('a non-give/give encounter nets -0.25 to the pool, rounded up only at the round\'s end', () => {
+  it('a non-give/give encounter nets -0.5 to the pool, rounded up only at the round\'s end', () => {
     const objects = [obj({ id: 0, basePattern: 'always-give' }), obj({ id: 1, basePattern: 'always-take' })];
     const rng = createRng(1);
     const { pool, subRounds } = simulateRound(objects, 1000, false, rng);
     // Mid-round the pool is fractional (only the final result gets rounded up)...
-    expect(subRounds[0].poolValue).toBeCloseTo(999.75);
-    // ...10 encounters of -0.25 = -2.5, then Math.ceil at the end.
-    expect(pool).toBe(998);
+    expect(subRounds[0].poolValue).toBeCloseTo(999.5);
+    // ...10 encounters of -0.5 = -5, then Math.ceil at the end (already a whole number here).
+    expect(pool).toBe(995);
   });
 
   it('caps give/give growth at POOL_MAX, rounding the plateau up to the cap at the round\'s end', () => {
     const objects = [obj({ id: 0, basePattern: 'always-give' }), obj({ id: 1, basePattern: 'always-give' })];
     const rng = createRng(21);
     const { pool } = simulateRound(objects, 9999, false, rng); // one below the cap
-    // Each encounter grows to the cap (10000) then costs -0.25, settling at 9999.75 — which
+    // Each encounter grows to the cap (10000) then costs -0.5, settling at 9999.5 — which
     // Math.ceil rounds back up to exactly the cap once the round ends.
     expect(pool).toBe(10000);
   });
@@ -171,7 +170,7 @@ describe('gameReducer', () => {
     let state = createInitialState();
     state.pool = 1; // force near-depletion
     // always-take vs always-take: take/take encounters aren't give/give, so they only ever cost
-    // the universal -0.25 (no +2 bonus) — 10 encounters of -0.25 = -2.5, easily depleting this.
+    // the universal -0.5 (no +2 bonus) — 10 encounters of -0.5 = -5, easily depleting this.
     state.objects = [
       obj({ id: 0, color: 'green', basePattern: 'always-take' }),
       obj({ id: 1, color: 'blue', basePattern: 'always-take' }),
@@ -185,7 +184,7 @@ describe('gameReducer', () => {
   it('declares a win with a proportional split once 100 stable rounds pass', () => {
     let state = createInitialState();
     // An all-give population never has anyone die, and the pool starts exactly at its cap:
-    // internally each encounter dips to 9999.75 (capped growth, then the universal -0.25), but
+    // internally each encounter dips to 9999.5 (capped growth, then the universal -0.5), but
     // Math.ceil rounds that back up to exactly the cap at the end of every round, holding it
     // perfectly flat from round 1 onward.
     const rng = createRng(10);
@@ -242,7 +241,7 @@ describe('gameReducer', () => {
   it('checkSustainability ends with no winner if the pool depletes during the check', () => {
     let state = createInitialState();
     // always-take vs always-take: take/take encounters aren't give/give, so they only ever cost
-    // the universal -0.25 (no +2 bonus) — the pool purely drains and depletes quickly.
+    // the universal -0.5 (no +2 bonus) — the pool purely drains and depletes quickly.
     state.objects = state.objects
       .filter((o) => o.color === 'blue')
       .map((o) => ({ ...o, basePattern: 'always-take' as const }));

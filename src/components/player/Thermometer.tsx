@@ -53,7 +53,9 @@ export function Thermometer({ pool }: Props) {
             </div>
           ))}
         </div>
-        <p className="thermometer__reading">{pool}</p>
+        {/* The pool is tracked as a fraction mid-round (see the Dev view for exact values);
+            this reading always shows a rounded whole number. */}
+        <p className="thermometer__reading">{Math.round(pool)}</p>
       </div>
     </div>
   );
