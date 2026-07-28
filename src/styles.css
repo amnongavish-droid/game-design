@@ -84,29 +84,67 @@ button:not(:disabled):hover {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  background: #1e293b;
+  gap: 8px;
+  padding: 14px 18px;
+  background: linear-gradient(155deg, var(--plate) 0%, #161c28 100%);
   border: 1px solid var(--plate-edge);
   border-radius: 8px;
-  min-width: 200px;
+  min-width: 210px;
   text-align: center;
 }
 
-.wild-card--selected {
-  border-color: var(--ember);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ember) 45%, transparent);
+.wild-card--selected .wild-card__medallion {
+  box-shadow: 0 0 0 4px color-mix(in srgb, #4ade80 28%, transparent), 0 0 0 4px
+    color-mix(in srgb, #60a5fa 28%, transparent), 0 10px 20px -8px rgba(0, 0, 0, 0.6);
 }
 
-.wild-card__button {
-  background: var(--ember);
-  border-color: var(--ember);
-  color: #2a1400;
+.wild-card__medallion {
+  all: unset;
+  cursor: pointer;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  padding: 3px;
+  background: conic-gradient(from -90deg, #4ade80 0deg 180deg, #60a5fa 180deg 360deg);
+  transition: transform 0.15s ease;
+}
+
+.wild-card__medallion:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+.wild-card__medallion:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.wild-card__medallion-face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #232c3d, #161c28 70%);
+}
+
+.wild-card__sigil-icon {
+  width: 30px;
+  height: 30px;
+  stroke: var(--bone);
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.wild-card__name {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   font-weight: 600;
-}
-
-.wild-card__button:not(:disabled):hover {
-  background: #f6a15c;
+  color: var(--bone);
 }
 
 .wild-card__caption {
@@ -126,6 +164,7 @@ button:not(:disabled):hover {
 
 .wild-card__scroller input[type='range'] {
   width: 100%;
+  accent-color: #4ade80;
 }
 
 .wild-card__readout {

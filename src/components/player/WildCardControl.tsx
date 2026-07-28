@@ -20,6 +20,22 @@ function costFor(objects: DisplayObject[], livesPerObject: number): number {
   return cost;
 }
 
+function WildCardSigil() {
+  return (
+    <svg viewBox="0 0 32 32" className="wild-card__sigil-icon">
+      <circle cx="16" cy="16" r="2.6" />
+      <path d="M16 9 V3" />
+      <path d="M16 23 V29" />
+      <path d="M23 16 H29" />
+      <path d="M9 16 H3" />
+      <path d="M20.8 11.2 L25 7" />
+      <path d="M11.2 20.8 L7 25" />
+      <path d="M20.8 20.8 L25 25" />
+      <path d="M11.2 11.2 L7 7" />
+    </svg>
+  );
+}
+
 export function WildCardControl({ pool, objects, pendingAction, onSelect, disabled }: Props) {
   const livingCount = objects.filter((o) => o.alive).length;
   // Conservative bound (ignores per-object caps) — guarantees the real cost, computed below,
@@ -44,13 +60,17 @@ export function WildCardControl({ pool, objects, pendingAction, onSelect, disabl
   return (
     <div className={`wild-card${isSelected ? ' wild-card--selected' : ''}`}>
       <button
-        className="wild-card__button"
+        className="wild-card__medallion"
         disabled={disabled || (unaffordable && !isSelected)}
         aria-pressed={isSelected}
+        aria-label="Wild card"
         onClick={select}
       >
-        Wild Card
+        <span className="wild-card__medallion-face">
+          <WildCardSigil />
+        </span>
       </button>
+      <p className="wild-card__name">Wild card</p>
       <p className="wild-card__caption">Gives every living object shared lives from the pool.</p>
       {isSelected ? (
         <div className="wild-card__scroller">
