@@ -1,13 +1,14 @@
 import { useState } from 'react';
+import { downloadCsv, logToCsv } from '../engine/csv';
+import type { RoundLogEntry } from '../engine/types';
 
 interface Props {
   soundEnabled: boolean;
   onToggleSound: (enabled: boolean) => void;
-  view: 'player' | 'dev';
-  onChangeView: (view: 'player' | 'dev') => void;
+  log: RoundLogEntry[];
 }
 
-export function SettingsPanel({ soundEnabled, onToggleSound, view, onChangeView }: Props) {
+export function SettingsPanel({ soundEnabled, onToggleSound, log }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -32,21 +33,18 @@ export function SettingsPanel({ soundEnabled, onToggleSound, view, onChangeView 
       {open && (
         <div className="settings-panel__popover">
           <div className="settings-panel__section">
-            <p className="settings-panel__section-title">View</p>
-            <div className="settings-panel__view-switch">
-              <button disabled={view === 'player'} onClick={() => onChangeView('player')}>
-                Player
-              </button>
-              <button disabled={view === 'dev'} onClick={() => onChangeView('dev')}>
-                Developer
-              </button>
-            </div>
-          </div>
-          <div className="settings-panel__section">
             <label className="settings-panel__toggle">
               <input type="checkbox" checked={soundEnabled} onChange={(e) => onToggleSound(e.target.checked)} />
               Sound
             </label>
+          </div>
+          <div className="settings-panel__section">
+            <button
+              disabled={log.length === 0}
+              onClick={() => downloadCsv(`give-take-log-${Date.now()}.csv`, logToCsv(log))}
+            >
+              Download Log ({log.length} rounds)
+            </button>
           </div>
         </div>
       )}

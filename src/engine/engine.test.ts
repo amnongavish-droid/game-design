@@ -165,6 +165,29 @@ describe('gameReducer', () => {
     expect(state.currentPlayer).toBe('green');
   });
 
+  it('records rule/action/lives-total/encounter-type details in the round log', () => {
+    let state = createInitialState();
+    state.objects = [
+      obj({ id: 0, color: 'green', basePattern: 'always-give' }),
+      obj({ id: 1, color: 'blue', basePattern: 'always-take' }),
+    ];
+    const rng = createRng(17);
+    state = takeTurn(state, { type: 'play-rule', rule: 'always-give' }, rng); // green is currentPlayer
+    const entry = state.log[0];
+    expect(entry.cardPlayer).toBe('green');
+    expect(entry.cardPlayed).toBe('always-give');
+    expect(entry.greenPattern).toBe('always-give');
+    expect(entry.bluePattern).toBe('always-take');
+    expect(entry.greenDouble).toBe(false);
+    expect(entry.blueDouble).toBe(false);
+    // Only 2 objects, so only their one effective encounter counts: give/take.
+    expect(entry.greenLivesTotal).toBe(9);
+    expect(entry.blueLivesTotal).toBe(11);
+    expect(entry.giveGiveCount).toBe(0);
+    expect(entry.takeGiveCount).toBe(1);
+    expect(entry.takeTakeCount).toBe(0);
+  });
+
   it('alternates the current player after each turn', () => {
     let state = createInitialState();
     const rng = createRng(7);
@@ -280,7 +303,9 @@ describe('csv', () => {
     const lines = csv.split('\n');
     expect(lines).toHaveLength(3); // header + 2 rounds
     expect(lines[0]).toBe(
-      'round,paused,poolBefore,poolAfter,greenAlive,blueAlive,deathsThisRound,steadyRoundsCount,status'
+      'round,paused,cardPlayer,cardPlayed,greenPattern,greenDouble,bluePattern,blueDouble,' +
+        'poolBefore,poolAfter,greenAlive,blueAlive,greenLivesTotal,blueLivesTotal,deathsThisRound,' +
+        'giveGiveCount,takeGiveCount,takeTakeCount,steadyRoundsCount,status'
     );
   });
 });

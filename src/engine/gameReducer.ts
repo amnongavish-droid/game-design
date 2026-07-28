@@ -12,6 +12,7 @@ import {
   type GameStatus,
   type RoundLogEntry,
   type RoundResult,
+  type RuleName,
   type TurnAction,
 } from './types';
 
@@ -48,6 +49,30 @@ function countAlive(objects: GameObject[], color: Color): number {
   return objects.filter((o) => o.alive && o.color === color).length;
 }
 
+function sumLives(objects: GameObject[], color: Color): number {
+  return objects.filter((o) => o.alive && o.color === color).reduce((sum, o) => sum + o.lives, 0);
+}
+
+/** Every object of a color always shares the same current rule, so any one of them (dead or
+ * alive) tells us the whole color's pattern/double state. */
+function colorRule(objects: GameObject[], color: Color): { pattern: RuleName; double: boolean } {
+  const found = objects.find((o) => o.color === color);
+  return found ? { pattern: found.basePattern, double: found.doubleActive } : { pattern: 'always-give', double: false };
+}
+
+function describeAction(action: TurnAction): string {
+  switch (action.type) {
+    case 'play-rule':
+      return action.rule;
+    case 'toggle-double':
+      return 'double';
+    case 'decline':
+      return 'decline';
+    case 'pause':
+      return 'pause';
+  }
+}
+
 export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameState {
   if (state.status !== 'in-progress') return state;
 
@@ -71,6 +96,9 @@ export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameSt
     subRounds,
     passObjectStates,
     deathsThisRound,
+    giveGiveCount,
+    takeGiveCount,
+    takeTakeCount,
   } = simulateRound(objects, state.pool, paused, rng);
 
   // A "stable" round requires the pool to hold exactly steady, not merely avoid decreasing.
@@ -95,14 +123,28 @@ export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameSt
         : { greenPct: (greenAlive / total) * 100, bluePct: (blueAlive / total) * 100 };
   }
 
+  const green = colorRule(resultObjects, 'green');
+  const blue = colorRule(resultObjects, 'blue');
+
   const logEntry: RoundLogEntry = {
     round: roundNumber,
     paused,
+    cardPlayer: state.currentPlayer,
+    cardPlayed: describeAction(action),
+    greenPattern: green.pattern,
+    greenDouble: green.double,
+    bluePattern: blue.pattern,
+    blueDouble: blue.double,
     poolBefore,
     poolAfter,
     greenAlive,
     blueAlive,
+    greenLivesTotal: sumLives(resultObjects, 'green'),
+    blueLivesTotal: sumLives(resultObjects, 'blue'),
     deathsThisRound,
+    giveGiveCount,
+    takeGiveCount,
+    takeTakeCount,
     steadyRoundsCount,
     status,
   };

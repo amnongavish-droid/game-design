@@ -39,11 +39,22 @@ export interface ObjectSnapshot {
 export interface RoundLogEntry {
   round: number;
   paused: boolean;
+  cardPlayer: Color;
+  cardPlayed: string;
+  greenPattern: RuleName;
+  greenDouble: boolean;
+  bluePattern: RuleName;
+  blueDouble: boolean;
   poolBefore: number;
   poolAfter: number;
   greenAlive: number;
   blueAlive: number;
+  greenLivesTotal: number;
+  blueLivesTotal: number;
   deathsThisRound: number;
+  giveGiveCount: number;
+  takeGiveCount: number;
+  takeTakeCount: number;
   steadyRoundsCount: number;
   status: GameStatus;
 }

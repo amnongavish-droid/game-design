@@ -17,13 +17,13 @@ Every encounter — whatever the decisions — costs the shared livelihood pool
 pool starts at 10000, is capped at 10000 (give/give can't grow it further once
 there), and only ever moves through these per-encounter effects — there's no
 separate per-round decrement. It's tracked as a fraction through the round,
-then rounded up to a whole number once the round ends (the Player view always
-displays a rounded whole number; the Developer view shows the exact values).
-If it hits 0, the game ends with no winner. If 100 consecutive rounds pass
-with no deaths and the pool exactly unchanged, the game is won and 100 points
-are split by the surviving color ratio. If one color is wiped out, a "Check
-Sustainability" button appears for the other — it plays 10 rounds and
-declares a winner if that color survives them intact.
+then rounded up to a whole number once the round ends (the on-screen reading
+always shows a rounded whole number). If it hits 0, the game ends with no
+winner. If 100 consecutive rounds pass with no deaths and the pool exactly
+unchanged, the game is won and 100 points are split by the surviving color
+ratio. If one color is wiped out, a "Check Sustainability" button appears for
+the other — it plays 10 rounds and declares a winner if that color survives
+them intact.
 
 ## Running it
 
@@ -34,12 +34,12 @@ npm test          # run the engine unit tests
 npm run build     # type-check + production build
 ```
 
-The app has two views, toggled from the settings menu (gear icon):
-
-- **Player view** — the field of objects, card selection/confirm/undo, and an
-  animated (~5s) playback of each round's encounters.
-- **Developer view** — exact stats per encounter sub-round, plus a button to
-  export the full game log as CSV.
+The settings menu (gear icon) has a sound toggle and a **Download Log** button
+that exports every round played so far as a CSV — for each round: whose turn
+it was and what they played, both colors' current rule and double-stakes
+state, the pool before/after, each color's surviving object count and total
+lives, how many give/give, give/take, and take/take encounters occurred, and
+the steady-streak/status at that point.
 
 ## Sharing a standalone copy
 

@@ -8,6 +8,9 @@ export interface SimulateRoundOutput {
   subRounds: SubRoundStat[];
   passObjectStates: ObjectSnapshot[][];
   deathsThisRound: number;
+  giveGiveCount: number;
+  takeGiveCount: number;
+  takeTakeCount: number;
 }
 
 /** Runs one round of encounters (or skips entirely if paused). Pure: returns new objects/pool, never mutates inputs. */
@@ -22,6 +25,9 @@ export function simulateRound(
   const passObjectStates: ObjectSnapshot[][] = [];
   let currentPool = pool;
   let deathsThisRound = 0;
+  let giveGiveCount = 0;
+  let takeGiveCount = 0;
+  let takeTakeCount = 0;
   // Tracks every pair that has already encountered each other earlier in this same simulation
   // (reset per round) — a repeat pairing still counts as that pass's encounter for both objects,
   // it just has no further effect.
@@ -54,15 +60,19 @@ export function simulateRound(
           // Give/give still grows the pool by 2 (capped at POOL_MAX) — on top of (not instead
           // of) the universal -0.5 per-encounter cost below, netting +1.5 while below the cap.
           currentPool = currentPool >= POOL_MAX ? currentPool : Math.min(currentPool + 2, POOL_MAX);
+          giveGiveCount += 1;
         } else if (decisionA === 'give' && decisionB === 'take') {
           deltaA = -mult;
           deltaB = mult;
+          takeGiveCount += 1;
         } else if (decisionA === 'take' && decisionB === 'give') {
           deltaA = mult;
           deltaB = -mult;
+          takeGiveCount += 1;
         } else {
           deltaA = -mult;
           deltaB = -mult;
+          takeTakeCount += 1;
         }
 
         a.lives += deltaA;
@@ -91,7 +101,16 @@ export function simulateRound(
   // accumulate through the round, then round up to a whole number once the round is done.
   currentPool = Math.ceil(currentPool);
 
-  return { objects: working, pool: currentPool, subRounds, passObjectStates, deathsThisRound };
+  return {
+    objects: working,
+    pool: currentPool,
+    subRounds,
+    passObjectStates,
+    deathsThisRound,
+    giveGiveCount,
+    takeGiveCount,
+    takeTakeCount,
+  };
 }
 
 function snapshotSubRound(
