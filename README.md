@@ -42,6 +42,16 @@ can never exceed what's currently in the pool. Playing it still uses the
 whole turn — no encounter round is simulated, and play passes to the other
 color immediately.
 
+## On a phone
+
+Held sideways, the whole board fits one screen with no scrolling: the stats,
+livelihood gauge and wild card share a single top strip, the field is sized off
+the viewport height, and the deck collapses to sigil-and-name tiles. Two things
+are dropped at that size because they can't be legible — the gauge's tick
+labels (the coloured bar and the numeric reading still give the value) and each
+card's rule text, which moves to the card's tooltip. Portrait and desktop are
+unchanged.
+
 ## Running it
 
 ```

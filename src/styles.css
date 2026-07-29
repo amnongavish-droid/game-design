@@ -763,3 +763,327 @@ button:not(:disabled):hover {
   padding-top: 12px;
   border-top: 1px solid var(--plate-edge);
 }
+
+/* ---------- Landscape phone ---------- */
+
+/* A phone held sideways has plenty of width but very little height, so the whole board is
+   re-proportioned to fit one screen with no scrolling: the top strip becomes a single row, the
+   field is sized off the viewport height rather than a fixed pixel width, and the deck collapses
+   to sigil-and-name tiles (each card's rule text moves to its title tooltip). Desktop is
+   unaffected — it's landscape too, but never this short. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .app {
+    max-width: none;
+    padding: 4px max(8px, env(safe-area-inset-right)) 4px max(8px, env(safe-area-inset-left));
+  }
+
+  .app__top-bar {
+    margin-bottom: 4px;
+  }
+
+  .app__title {
+    font-size: 0.85rem;
+  }
+
+  .settings-panel__icon {
+    padding: 4px;
+  }
+
+  /* Top strip: stats, thermometer and wild card share one compact row. */
+  .top-row {
+    gap: 10px;
+    margin-bottom: 4px;
+    flex-wrap: nowrap;
+  }
+
+  .stats-bar {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 8px;
+    font-size: 0.68rem;
+    white-space: nowrap;
+  }
+
+  .thermometer {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .thermometer__title {
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+  }
+
+  .thermometer__row {
+    flex: 1;
+    min-width: 0;
+    gap: 8px;
+  }
+
+  /* The gradient bar and the numeric reading carry the value on their own; the 11 tick
+     labels can't be legible at this width, so they're dropped rather than crowded. */
+  .thermometer__scale {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+    height: 12px;
+    margin-bottom: 0;
+  }
+
+  .thermometer__tick {
+    display: none;
+  }
+
+  .thermometer__bulb {
+    width: 18px;
+    height: 18px;
+  }
+
+  .thermometer__reading {
+    font-size: 0.72rem;
+  }
+
+  .wild-card {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 9px;
+    min-width: 0;
+  }
+
+  .wild-card__medallion {
+    width: 40px;
+    height: 40px;
+    padding: 2px;
+  }
+
+  .wild-card--selected .wild-card__medallion {
+    box-shadow: 0 0 0 3px color-mix(in srgb, #4ade80 28%, transparent), 0 0 0 3px
+      color-mix(in srgb, #60a5fa 28%, transparent);
+  }
+
+  .wild-card__sigil-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .wild-card__name {
+    font-size: 0.6rem;
+  }
+
+  .wild-card__caption {
+    display: none;
+  }
+
+  .wild-card__scroller {
+    width: 104px;
+    flex-shrink: 0;
+    gap: 2px;
+  }
+
+  .wild-card__readout {
+    font-size: 0.6rem;
+    line-height: 1.25;
+  }
+
+  .wild-card__hint {
+    font-size: 0.6rem;
+    max-width: 104px;
+    line-height: 1.25;
+  }
+
+  /* Field row: the canvas is driven by viewport height, with the colour panels beside it. */
+  .field-row {
+    gap: 10px;
+    margin-bottom: 4px;
+    flex-wrap: nowrap;
+  }
+
+  /* The field takes whatever height is left once the three surrounding strips have their
+     share — the 200px reserve is the top bar, top strip, deck and gaps added up. */
+  .field-canvas {
+    height: min(48vh, calc(100vh - 200px));
+    width: auto;
+    max-width: 46vw;
+  }
+
+  .color-panel {
+    width: 92px;
+    padding: 7px 8px;
+    border-top-width: 2px;
+  }
+
+  .color-panel--active {
+    border-width: 2px;
+    padding: 6px 7px;
+  }
+
+  .color-panel__label {
+    font-size: 0.62rem;
+    margin-bottom: 3px;
+    gap: 4px;
+  }
+
+  .color-panel__turn-badge {
+    font-size: 0.5rem;
+    padding: 0 4px;
+  }
+
+  .color-panel__rule {
+    font-size: 0.66rem;
+    line-height: 1.3;
+    min-height: 2.4em;
+    margin-bottom: 5px;
+  }
+
+  .color-panel__count {
+    font-size: 0.6rem;
+  }
+
+  .color-panel__count strong {
+    font-size: 0.95rem;
+  }
+
+  .sustainability-btn {
+    width: 92px;
+    font-size: 0.62rem;
+    padding: 5px 6px;
+  }
+
+  .simulation-overlay {
+    bottom: 4px;
+    padding: 4px 8px;
+    max-width: 240px;
+  }
+
+  .simulation-overlay__label {
+    font-size: 0.62rem;
+    margin-bottom: 3px;
+  }
+
+  .simulation-overlay__bar {
+    height: 4px;
+  }
+
+  /* Deck: tiles that share the row's width instead of fixed-width cards that would scroll. */
+  .turn-panel {
+    padding: 5px 8px 7px;
+    border-left-width: 3px;
+  }
+
+  .turn-panel__body {
+    gap: 8px;
+  }
+
+  .turn-panel__cards {
+    gap: 6px;
+    padding: 3px 2px;
+  }
+
+  .card {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    min-height: 0;
+    padding: 5px 4px;
+    gap: 3px;
+    align-items: center;
+    text-align: center;
+    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+  }
+
+  .card--modifier {
+    clip-path: polygon(50% 0, 100% 8px, 100% 100%, 0 100%, 0 8px);
+  }
+
+  .card--selected {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 60%, transparent);
+  }
+
+  .card__sigil {
+    width: 28px;
+    height: 28px;
+  }
+
+  .card__sigil svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .card__name {
+    font-size: 0.53rem;
+    line-height: 1.15;
+    letter-spacing: 0;
+  }
+
+  .card__rule,
+  .card__tag {
+    display: none;
+  }
+
+  .turn-panel__actions {
+    gap: 5px;
+  }
+
+  .confirm-move-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .undo-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  /* The selected card's glow already says a card is staged. */
+  .turn-panel__pending-note {
+    display: none;
+  }
+
+  .start-screen {
+    margin: 8px auto;
+    padding: 14px 20px;
+    max-width: 480px;
+  }
+
+  .start-screen h2 {
+    font-size: 1.05rem;
+    margin-bottom: 6px;
+  }
+
+  .start-screen p {
+    font-size: 0.72rem;
+    line-height: 1.45;
+    margin: 0 0 10px;
+  }
+
+  .start-screen__button {
+    margin-top: 0;
+    padding: 8px 20px;
+    font-size: 0.85rem;
+  }
+
+  .result-overlay {
+    padding: 8px;
+  }
+
+  .result-overlay__card {
+    padding: 14px 20px;
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+
+  .result-overlay__status {
+    font-size: 1.05rem;
+    margin-bottom: 5px;
+  }
+
+  .result-overlay__message {
+    font-size: 0.72rem;
+    margin-bottom: 10px;
+  }
+}
