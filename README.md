@@ -12,6 +12,12 @@ their 10 encounters, but its outcome is ignored (no life or pool change):
 - give + take → giver loses a life, taker gains one
 - take + take → both lose a life
 
+Tit-for-Tat (and its delayed variant) track each object's win/loss streak
+continuously — that streak isn't reset when a round or turn ends. An object
+that was still mid-retaliation (or mid-streak, for the delayed variant) when
+the previous round ended carries that state into the next one, so a round
+doesn't necessarily open with everyone giving.
+
 Every encounter — whatever the decisions — costs the shared livelihood pool
 0.5, so give/give nets +1.5 overall while every other outcome nets -0.5. The
 pool starts at 10000, is capped at 10000 (give/give can't grow it further once

@@ -188,6 +188,26 @@ describe('gameReducer', () => {
     expect(entry.takeTakeCount).toBe(0);
   });
 
+  it('carries a tit-for-tat retaliation streak across rounds, so a new round can open on a take', () => {
+    let state = createInitialState();
+    state.objects = [
+      obj({ id: 0, color: 'green', basePattern: 'tit-for-tat' }),
+      obj({ id: 1, color: 'blue', basePattern: 'always-take' }),
+    ];
+    const rng = createRng(23);
+    // Round 1: green still opens on give (fresh streak), blue takes -> green loses a life
+    // (9) and blue gains one (11), and green starts a retaliation streak.
+    state = takeTurn(state, { type: 'play-rule', rule: 'tit-for-tat' }, rng); // green's turn
+    expect(state.objects[0].lives).toBe(9);
+    expect(state.objects[1].lives).toBe(11);
+    // Round 2 (blue declines, no rule change on either side): the streak from round 1 carries
+    // over, so green's first encounter of this new round opens on take, not give — both sides
+    // take this time, so both lose a life off their round-1 totals.
+    state = takeTurn(state, { type: 'decline' }, rng);
+    expect(state.objects[0].lives).toBe(8);
+    expect(state.objects[1].lives).toBe(10);
+  });
+
   it('wild card boosts every living object of both colors, capped at STARTING_LIVES, costing the pool the actual total gained, with no encounter simulation that turn', () => {
     let state = createInitialState();
     state.objects = [

@@ -54,7 +54,8 @@ export const CARD_DEFS: CardDef[] = [
     kind: 'base',
     accent: 'tft',
     name: 'Tit-for-Tat',
-    ruleText: 'Gives by default — but takes once, right after losing a life.',
+    ruleText:
+      'Gives by default — but takes once, right after losing a life. That memory carries across rounds, so a round can open on a take.',
     tag: 'Base pattern',
     action: { type: 'play-rule', rule: 'tit-for-tat' },
   },
@@ -63,7 +64,8 @@ export const CARD_DEFS: CardDef[] = [
     kind: 'base',
     accent: 'tft',
     name: 'Tit-for-Tat, Delayed',
-    ruleText: 'Gives by default — takes once, only after losing two in a row.',
+    ruleText:
+      'Gives by default — takes once, only after losing two in a row. That streak carries across rounds, so a round can open on a take.',
     tag: 'Base pattern',
     action: { type: 'play-rule', rule: 'tit-for-tat-delayed' },
   },
