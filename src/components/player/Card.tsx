@@ -78,13 +78,11 @@ export function Card({ def, selected, disabled, onClick }: Props) {
       disabled={disabled}
       onClick={onClick}
       aria-pressed={selected}
-      // On a landscape phone the rule text is hidden to fit the deck on screen, so keep it
-      // reachable here (and as a hover hint on desktop).
+      // The rule text isn't shown on the card face, so it's reachable here as a hover tooltip.
       title={`${def.name} — ${def.ruleText}`}
     >
       <div className="card__sigil">{SIGILS[def.id]}</div>
       <p className="card__name">{def.name}</p>
-      <p className="card__rule">{def.ruleText}</p>
       <span className="card__tag">{def.tag}</span>
     </button>
   );

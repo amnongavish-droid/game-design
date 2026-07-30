@@ -597,7 +597,7 @@ button:not(:disabled):hover {
   border: 1px solid var(--plate-edge);
   border-radius: 8px;
   padding: 10px 9px 9px;
-  min-height: 158px;
+  min-height: 128px;
   flex: 0 0 118px;
   width: 118px;
   display: flex;
@@ -680,14 +680,6 @@ button:not(:disabled):hover {
   font-weight: 600;
   color: var(--bone);
   margin: 0;
-}
-
-.card__rule {
-  font-size: 0.76rem;
-  line-height: 1.4;
-  color: var(--bone-dim);
-  margin: 0;
-  flex: 1;
 }
 
 .card__tag {
@@ -1020,7 +1012,6 @@ button:not(:disabled):hover {
     letter-spacing: 0;
   }
 
-  .card__rule,
   .card__tag {
     display: none;
   }
