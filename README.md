@@ -23,12 +23,15 @@ pool starts at 10000, is capped at 10000 (give/give can't grow it further once
 there), and only ever moves through these per-encounter effects — there's no
 separate per-round decrement. It's tracked as a fraction through the round,
 then rounded up to a whole number once the round ends (the on-screen reading
-always shows a rounded whole number). If it hits 0, the game ends with no
-winner. If 100 consecutive rounds pass with no deaths and the pool exactly
-unchanged, the game is won and 100 points are split by the surviving color
-ratio. If one color is wiped out, a "Check Sustainability" button appears for
-the other — it plays 10 rounds and declares a winner if that color survives
-them intact.
+always shows a rounded whole number). If it hits 0 — whether from encounters
+draining it or a wild card spending the last of it — the game ends immediately,
+and whichever color has more living objects at that moment wins outright (a
+tie, including a mutual wipeout with both at zero, ends with no winner). If
+100 consecutive rounds pass with no deaths and the pool exactly unchanged, the
+game is won and 100 points are split by the surviving color ratio. If one
+color is wiped out while the pool is still healthy, a "Check Sustainability"
+button appears for the other — it plays 10 rounds and declares a winner if
+that color survives them intact.
 
 Playing a new base-pattern card always resets that color's double-stakes
 modifier — a double only carries over across a decline/pause, not across a

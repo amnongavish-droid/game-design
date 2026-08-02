@@ -289,6 +289,38 @@ describe('gameReducer', () => {
     expect(state.winner).toBeUndefined();
   });
 
+  it('declares whichever color has more objects the winner when the pool runs dry with an uneven population', () => {
+    let state = createInitialState();
+    state.pool = 0.4; // one real encounter's -0.5 universal cost is enough to deplete it
+    state.objects = [
+      obj({ id: 0, color: 'green', basePattern: 'always-take' }),
+      obj({ id: 1, color: 'green', basePattern: 'always-take' }),
+      obj({ id: 2, color: 'blue', basePattern: 'always-take' }),
+    ];
+    const rng = createRng(24);
+    state = takeTurn(state, { type: 'decline' }, rng);
+    expect(state.pool).toBeLessThanOrEqual(0);
+    expect(state.objects.filter((o) => o.alive && o.color === 'green')).toHaveLength(2);
+    expect(state.objects.filter((o) => o.alive && o.color === 'blue')).toHaveLength(1);
+    expect(state.status).toBe('won');
+    expect(state.winner).toEqual({ greenPct: 100, bluePct: 0 });
+  });
+
+  it('same pool-depletion rule, the other way round: blue wins when blue has more objects', () => {
+    let state = createInitialState();
+    state.pool = 0.4;
+    state.objects = [
+      obj({ id: 0, color: 'green', basePattern: 'always-take' }),
+      obj({ id: 1, color: 'blue', basePattern: 'always-take' }),
+      obj({ id: 2, color: 'blue', basePattern: 'always-take' }),
+    ];
+    const rng = createRng(25);
+    state = takeTurn(state, { type: 'decline' }, rng);
+    expect(state.pool).toBeLessThanOrEqual(0);
+    expect(state.status).toBe('won');
+    expect(state.winner).toEqual({ greenPct: 0, bluePct: 100 });
+  });
+
   it('declares a win with a proportional split once 100 stable rounds pass', () => {
     let state = createInitialState();
     // An all-give population never has anyone die, and the pool starts exactly at its cap:
@@ -346,18 +378,20 @@ describe('gameReducer', () => {
     expect(result.steadyRoundsCount).toBeLessThan(100); // won on the sustainability check, not the streak
   });
 
-  it('checkSustainability ends with no winner if the pool depletes during the check', () => {
+  it('checkSustainability still declares the survivor the winner if the pool depletes during the check', () => {
     let state = createInitialState();
     // always-take vs always-take: take/take encounters aren't give/give, so they only ever cost
-    // the universal -0.5 (no +2 bonus) — the pool purely drains and depletes quickly.
+    // the universal -0.5 (no +2 bonus) — the pool purely drains and depletes quickly. Green is
+    // already eliminated, so blue — still populated when the pool hits 0 — has strictly more
+    // objects left and wins outright, the same as any other pool-depletion win.
     state.objects = state.objects
       .filter((o) => o.color === 'blue')
       .map((o) => ({ ...o, basePattern: 'always-take' as const }));
     state.pool = 15;
     const rng = createRng(15);
     const result = checkSustainability(state, rng);
-    expect(result.status).toBe('lost');
-    expect(result.winner).toBeUndefined();
+    expect(result.status).toBe('won');
+    expect(result.winner).toEqual({ greenPct: 0, bluePct: 100 });
   });
 });
 

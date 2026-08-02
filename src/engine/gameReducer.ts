@@ -132,7 +132,15 @@ export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameSt
   let winner: GameState['winner'];
 
   if (poolAfter <= 0 || (greenAlive === 0 && blueAlive === 0)) {
-    status = 'lost';
+    // The pool running dry (whether from encounters or a wild card) still ends the game, but
+    // it's a win for whichever color has more objects left rather than a loss for both — unless
+    // it's a tie (including a mutual wipeout, which is a tie at zero).
+    if (greenAlive === blueAlive) {
+      status = 'lost';
+    } else {
+      status = 'won';
+      winner = greenAlive > blueAlive ? { greenPct: 100, bluePct: 0 } : { greenPct: 0, bluePct: 100 };
+    }
   } else if (steadyRoundsCount >= STEADY_ROUNDS_TO_WIN) {
     status = 'won';
     const total = greenAlive + blueAlive;
