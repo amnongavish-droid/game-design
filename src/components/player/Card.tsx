@@ -34,15 +34,6 @@ const SIGILS: Record<string, JSX.Element> = {
       <path d="M26 20 h-7 M19 20 l3 -3 m-3 3 l3 3" />
     </svg>
   ),
-  'tit-for-tat-delayed': (
-    <svg viewBox="0 0 32 32">
-      <path d="M16 4 V28" strokeDasharray="2 3" />
-      <circle cx="9" cy="10" r="1.4" fill="currentColor" stroke="none" />
-      <circle cx="9" cy="14" r="1.4" fill="currentColor" stroke="none" />
-      <path d="M6 20 h7 M13 20 l-3 -3 m3 3 l-3 3" />
-      <path d="M26 20 h-7 M19 20 l3 -3 m-3 3 l3 3" />
-    </svg>
-  ),
   double: (
     <svg viewBox="0 0 32 32">
       <path d="M17 3 L9 17 h6 l-2 12 l10 -16 h-6 Z" />

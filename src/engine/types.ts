@@ -1,11 +1,6 @@
 export type Color = 'green' | 'blue';
 export type Decision = 'give' | 'take';
-export type RuleName =
-  | 'always-give'
-  | 'always-take'
-  | 'alternate'
-  | 'tit-for-tat'
-  | 'tit-for-tat-delayed';
+export type RuleName = 'always-give' | 'always-take' | 'alternate' | 'tit-for-tat';
 export type Card = RuleName | 'double' | 'pause';
 
 export interface GameObject {

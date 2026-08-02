@@ -5,7 +5,6 @@ export const RULE_LABELS: Record<RuleName, string> = {
   'always-take': 'Always Take',
   alternate: 'Alternate',
   'tit-for-tat': 'Tit-for-Tat',
-  'tit-for-tat-delayed': 'Tit-for-Tat (Delayed)',
 };
 
 export type CardKind = 'base' | 'modifier' | 'action' | 'ghost';
@@ -58,16 +57,6 @@ export const CARD_DEFS: CardDef[] = [
       'Gives by default — but takes once, right after losing a life. That memory carries across rounds, so a round can open on a take.',
     tag: 'Base pattern',
     action: { type: 'play-rule', rule: 'tit-for-tat' },
-  },
-  {
-    id: 'tit-for-tat-delayed',
-    kind: 'base',
-    accent: 'tft',
-    name: 'Tit-for-Tat, Delayed',
-    ruleText:
-      'Gives by default — takes once, only after losing two in a row. That streak carries across rounds, so a round can open on a take.',
-    tag: 'Base pattern',
-    action: { type: 'play-rule', rule: 'tit-for-tat-delayed' },
   },
   {
     id: 'double',

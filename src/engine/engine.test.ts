@@ -45,16 +45,6 @@ describe('rules', () => {
     updateHistory(o, 'take', 1); // retaliation succeeded (gained a life)
     expect(decide(o)).toBe('give'); // back to giving
   });
-
-  it('tit-for-tat-delayed only retaliates after two losses in a row', () => {
-    const o = obj({ basePattern: 'tit-for-tat-delayed' });
-    updateHistory(o, 'give', -1);
-    expect(decide(o)).toBe('give'); // only one loss so far
-    updateHistory(o, 'give', -1);
-    expect(decide(o)).toBe('take'); // two losses in a row -> retaliate
-    updateHistory(o, 'take', 1);
-    expect(decide(o)).toBe('give'); // retaliation used, streak reset
-  });
 });
 
 describe('simulateRound', () => {
