@@ -227,6 +227,26 @@ describe('gameReducer', () => {
     expect(state.pool).toBe(100);
   });
 
+  it('allows a wild card that costs more than the pool holds, ending the game via the pool-depletion rule', () => {
+    let state = createInitialState();
+    state.objects = [
+      obj({ id: 0, color: 'green', lives: 2 }),
+      obj({ id: 1, color: 'green', lives: 2 }),
+      obj({ id: 2, color: 'blue', lives: 2 }),
+    ];
+    state.pool = 5; // far less than the 24 this wild card actually costs
+    const rng = createRng(26);
+    state = takeTurn(state, { type: 'wild-card', livesPerObject: 10 }, rng);
+    // The play still goes through in full — every object gets boosted to the cap regardless of
+    // the shortfall.
+    expect(state.objects.every((o) => o.lives === 10)).toBe(true);
+    // The pool is never displayed/stored as negative, just depleted.
+    expect(state.pool).toBe(0);
+    // Green has more objects left (2 vs blue's 1), so green wins outright.
+    expect(state.status).toBe('won');
+    expect(state.winner).toEqual({ greenPct: 100, bluePct: 0 });
+  });
+
   it('switches the turn after a wild card, like any other action', () => {
     let state = createInitialState();
     const rng = createRng(19);

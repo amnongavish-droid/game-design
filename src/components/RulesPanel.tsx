@@ -114,9 +114,10 @@ export function RulesPanel() {
               Instead of playing a card, either player can spend their turn on the wild card: choose, via a
               slider, how many lives (1–10) to give to <em>every</em> living object of <em>both</em> colors,
               paid for out of the shared pool at exactly that total cost. An object already at or past 10
-              lives is topped up by less, or not at all, and costs accordingly, and the slider is capped so
-              the total can never exceed what's currently in the pool. Playing it still uses the whole turn:
-              no encounter round is simulated, and play passes to the other color immediately.
+              lives is topped up by less, or not at all, and costs accordingly. Nothing stops a request that
+              costs more than the pool holds — it's allowed, and simply empties the pool, ending the game
+              under the pool-depleted rule below. Playing it still uses the whole turn: no encounter round is
+              simulated, and play passes to the other color immediately.
             </p>
           </section>
 

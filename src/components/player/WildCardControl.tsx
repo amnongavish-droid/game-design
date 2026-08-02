@@ -37,20 +37,16 @@ function WildCardSigil() {
 }
 
 export function WildCardControl({ pool, objects, pendingAction, onSelect, disabled }: Props) {
-  const livingCount = objects.filter((o) => o.alive).length;
-  // Conservative bound (ignores per-object caps) — guarantees the real cost, computed below,
-  // never exceeds the pool.
-  const maxAffordable = livingCount > 0 ? Math.floor(pool / livingCount) : 0;
-  const maxN = Math.max(0, Math.min(STARTING_LIVES, maxAffordable));
-  const unaffordable = maxN < 1;
-
   const isSelected = pendingAction?.type === 'wild-card';
   const value = isSelected ? pendingAction.livesPerObject : 1;
   const cost = isSelected ? costFor(objects, value) : 0;
+  // The pool doesn't gate the slider at all — a request that costs more than the pool holds is
+  // allowed through, and simply empties it, ending the game (whoever has more objects wins).
+  const overspend = isSelected && cost > pool;
 
   const select = () => {
-    if (unaffordable || disabled) return;
-    onSelect({ type: 'wild-card', livesPerObject: Math.min(1, maxN) });
+    if (disabled) return;
+    onSelect({ type: 'wild-card', livesPerObject: 1 });
   };
 
   const slide = (n: number) => {
@@ -61,7 +57,7 @@ export function WildCardControl({ pool, objects, pendingAction, onSelect, disabl
     <div className={`wild-card${isSelected ? ' wild-card--selected' : ''}`}>
       <button
         className="wild-card__medallion"
-        disabled={disabled || (unaffordable && !isSelected)}
+        disabled={disabled}
         aria-pressed={isSelected}
         aria-label="Wild card"
         onClick={select}
@@ -72,24 +68,23 @@ export function WildCardControl({ pool, objects, pendingAction, onSelect, disabl
       </button>
       <p className="wild-card__name">Wild card</p>
       <p className="wild-card__caption">Gives every living object shared lives from the pool.</p>
-      {isSelected ? (
+      {isSelected && (
         <div className="wild-card__scroller">
           <input
             type="range"
             min={1}
-            max={Math.max(1, maxN)}
+            max={STARTING_LIVES}
             step={1}
             value={value}
             disabled={disabled}
             onChange={(e) => slide(Number(e.target.value))}
           />
           <p className="wild-card__readout">
-            +{value} life{value === 1 ? '' : 's'} each — costs {cost} from the pool
+            +{value} {value === 1 ? 'life' : 'lives'} each — costs {cost} from the pool
           </p>
+          {overspend && <p className="wild-card__hint">Costs more than the pool holds — this empties it and ends the game.</p>}
         </div>
-      ) : unaffordable ? (
-        <p className="wild-card__hint">Not enough livelihood to afford it right now.</p>
-      ) : null}
+      )}
     </div>
   );
 }

@@ -150,6 +150,11 @@ export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameSt
         : { greenPct: (greenAlive / total) * 100, bluePct: (blueAlive / total) * 100 };
   }
 
+  // A wild card is allowed to request more than the pool holds (it just ends the game via the
+  // depletion check above) — clamp what's actually stored/displayed/logged so the livelihood
+  // pool never reads as a negative number.
+  const displayedPool = Math.max(0, poolAfter);
+
   const green = colorRule(resultObjects, 'green');
   const blue = colorRule(resultObjects, 'blue');
 
@@ -163,7 +168,7 @@ export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameSt
     bluePattern: blue.pattern,
     blueDouble: blue.double,
     poolBefore,
-    poolAfter,
+    poolAfter: displayedPool,
     greenAlive,
     blueAlive,
     greenLivesTotal: sumLives(resultObjects, 'green'),
@@ -180,7 +185,7 @@ export function takeTurn(state: GameState, action: TurnAction, rng: Rng): GameSt
 
   return {
     round: roundNumber,
-    pool: poolAfter,
+    pool: displayedPool,
     objects: resultObjects,
     currentPlayer: state.currentPlayer === 'green' ? 'blue' : 'green',
     steadyRoundsCount,

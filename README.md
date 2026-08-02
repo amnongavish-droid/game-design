@@ -45,10 +45,12 @@ Instead of playing a card, either player can spend their turn on the wild
 card: pick, via a slider, how many lives (1–10) to give to *every* living
 object of *both* colors, paid for out of the shared pool at exactly that
 total cost (an object already at or past 10 lives is topped up by less, or
-not at all, and costs accordingly). The slider's range is capped so the total
-can never exceed what's currently in the pool. Playing it still uses the
-whole turn — no encounter round is simulated, and play passes to the other
-color immediately.
+not at all, and costs accordingly). The slider always covers the full 1–10
+range — nothing stops a request that costs more than the pool holds; playing
+it is allowed regardless, and it simply empties the pool, ending the game
+under the same pool-depletion rule as any other cause. Playing the wild card
+still uses the whole turn — no encounter round is simulated, and play passes
+to the other color immediately.
 
 ## On a phone
 
