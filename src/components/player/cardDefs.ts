@@ -72,7 +72,7 @@ export const CARD_DEFS: CardDef[] = [
     kind: 'action',
     accent: 'pause',
     name: 'Pause',
-    ruleText: "Skip this round's encounters entirely. The central pool still drains.",
+    ruleText: "Skips this round's encounters entirely. The livelihood pool is untouched.",
     tag: 'Action',
     action: { type: 'pause' },
   },
